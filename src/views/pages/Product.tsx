@@ -43,6 +43,10 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
     : `Hi, I'd like to ask about:\n${it.title}\nCondition: ${gradeLabel(v, it.grade)}\nListed price: ${money(v, it.price)}\n${url}`;
   const wa = waLink(v, waText);
   const tested = units.filter((u) => u.battery_health_pct !== null);
+  const isUnknown = (x: any) => x === '—' || (x && typeof x === 'object' && x.props?.className === 'unknown');
+  const allSpecs = specRows(v, it, { ports: variant.ports, connectivity: variant.connectivity, warranty: warrantyText, keyboard: variant.keyboard_layout });
+  const knownSpecs = allSpecs.filter(([, val]) => !isUnknown(val));
+  const hiddenSpecs = allSpecs.length - knownSpecs.length;
   const funcStatus = units.length ? units.every((u) => u.inspection?.functional_status === 'passed') ? 'passed' : units.some((u) => u.inspection?.functional_status === 'failed') ? 'failed' : units.some((u) => !u.inspection) ? 'unknown' : 'passed_with_notes' : null;
   const single = it.inventory_mode === 'unique' || units.length === 1;
   // Has anything about condition actually been recorded? If not, show one honest line instead of empty tables.
@@ -168,7 +172,7 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
         </div>
 
         <nav className="pdp-tabs" aria-label="sections">
-          {!it.is_accessory ? <><a href="#condition">{t('condition')}</a><a href="#battery">{t('battery')}</a><a href="#specs">{t('specs')}</a></> : null}
+          {!it.is_accessory ? <><a href="#condition">{t('condition')}</a>{tested.length ? <a href="#battery">{t('battery')}</a> : null}<a href="#specs">{t('specs')}</a></> : null}
           {d.related.length ? <a href="#related">{t('related')}</a> : null}
         </nav>
 
@@ -178,8 +182,8 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
               <h2>{t('condition')}</h2>
               {!hasCond ? (
                 <>{it.grade ? <p className="cond-summary"><b>{t('cosmetic')}:</b> <GradeBadge v={v} grade={it.grade} /> <span className="muted">{bi(v, (settings.grade_definitions as any)[it.grade])}</span></p> : null}
-                <p className="note note--info"><Icon name="info" size={18} />{locale === 'ar' ? 'صور الجهاز الفعلي وأي تفاصيل إضافية متاحة عند الطلب — اسألنا على واتساب وهنبعتلك صور الوحدة.' : 'Photos of the actual unit and any extra details are available on request — ask us on WhatsApp.'}
-                  {wa ? <> <a href={wa} className="js-wa" data-source="whatsapp_product" data-variant={it.id} target="_blank" rel="noopener">{t('ask_whatsapp')}</a></> : null}</p></>
+                <p className="note note--info"><Icon name="info" size={18} /><span>{locale === 'ar' ? 'صور الجهاز الفعلي وأي تفاصيل إضافية متاحة عند الطلب — ' : 'Photos of the actual unit and any extra details are available on request — '}
+                  {wa ? <a href={wa} className="js-wa" data-source="whatsapp_product" data-variant={it.id} target="_blank" rel="noopener">{locale === 'ar' ? 'اطلب صور الجهاز على واتساب' : 'ask for unit photos on WhatsApp'}</a> : null}</span></p></>
               ) : <>
               <p className="hint"><Icon name="info" size={16} />{t('grade_vs_function')}</p>
               <div className="cond-grid">
@@ -220,7 +224,7 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
               </>}
             </section>
 
-            <section id="battery" className="panel">
+            {tested.length ? <section id="battery" className="panel">
               <h2>{t('battery')}</h2>
               {tested.length === 0 ? <p className="note note--warn"><Icon name="battery" size={18} />{t('battery_unknown')}</p> : single && u0 ? (
                 <dl className="dl dl--wide">
@@ -237,13 +241,14 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
                 </>
               )}
               <p className="muted small">{locale === 'ar' ? 'لا نعرض عمر تشغيل تقديري لأنه يعتمد على الاستخدام ولم يُقس.' : 'We do not show an estimated runtime — it depends on usage and has not been measured.'}</p>
-            </section>
+            </section> : null}
 
             <section id="specs" className="panel">
               <h2>{t('specs')}</h2>
               <div className="table-wrap"><table className="table table--specs"><tbody>
-                {specRows(v, it, { ports: variant.ports, connectivity: variant.connectivity, warranty: warrantyText, keyboard: variant.keyboard_layout }).map(([k, val]) => <tr key={k}><th scope="row">{k}</th><td>{val}</td></tr>)}
+                {knownSpecs.map(([k, val]) => <tr key={k}><th scope="row">{k}</th><td>{val}</td></tr>)}
               </tbody></table></div>
+              {hiddenSpecs ? <p className="muted small specs-more">{locale === 'ar' ? 'محتاج تفاصيل تانية (الوزن، المنافذ، الدقة…)؟ ' : 'Need other details (weight, ports, resolution…)? '}{wa ? <a href={wa} className="js-wa" data-source="whatsapp_specs" data-variant={it.id} target="_blank" rel="noopener">{locale === 'ar' ? 'اسألنا على واتساب' : 'Ask us on WhatsApp'}</a> : null}</p> : null}
             </section>
           </>
         ) : null}

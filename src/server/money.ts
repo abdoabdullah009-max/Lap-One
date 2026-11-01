@@ -19,7 +19,7 @@ export function parseEGP(input: string | null | undefined): number | null {
 export function formatEGP(piasters: number, locale: 'ar' | 'en' = 'ar'): string {
   const pounds = piasters / 100;
   const hasFrac = piasters % 100 !== 0;
-  const num = new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-EG', {
+  const num = new Intl.NumberFormat(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', {
     minimumFractionDigits: hasFrac ? 2 : 0, maximumFractionDigits: 2,
   }).format(pounds);
   return locale === 'ar' ? `${num} ج.م` : `EGP ${num}`;

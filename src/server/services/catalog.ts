@@ -143,6 +143,7 @@ export function perfIndex(it: CatalogItem): number {
 }
 export function valueScore(it: CatalogItem): number { return perfIndex(it) / Math.max(it.price / 100_000, 1); }
 
+const complete = (i: CatalogItem) => Number(!!(i.ram_gb && i.storage_gb && i.cpu_gen));
 export function sortItems(items: CatalogItem[], sort = 'recommended', scores?: Map<number, number>): CatalogItem[] {
   const arr = [...items];
   const stock = (a: CatalogItem, b: CatalogItem) => Number(b.available > 0) - Number(a.available > 0);
@@ -154,7 +155,7 @@ export function sortItems(items: CatalogItem[], sort = 'recommended', scores?: M
     case 'rating': return arr.sort((a, b) => stock(a, b) || (b.rating_avg ?? -1) - (a.rating_avg ?? -1) || b.rating_count - a.rating_count);
     default:
       return arr.sort((a, b) => stock(a, b) || ((scores?.get(b.id) ?? 0) - (scores?.get(a.id) ?? 0))
-        || Number(b.is_offer) - Number(a.is_offer) || valueScore(b) - valueScore(a));
+        || Number(b.is_offer) - Number(a.is_offer) || complete(b) - complete(a) || (b.cpu_gen || 0) - (a.cpu_gen || 0) || valueScore(b) - valueScore(a));
   }
 }
 

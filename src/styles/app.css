@@ -765,3 +765,19 @@ h1, h2, h3, h4 { color: var(--navy); }
   .promises li small { font-size: .74rem; }
 }
 @media (min-width: 641px) and (max-width: 920px) { .ucircles { gap: 18px; flex-wrap: nowrap; } .ucircle { width: 116px; } .ucircle__disc { width: 104px; height: 104px; } }
+
+/* ---------- Review fixes (Nov 2026) ---------- */
+.hero2 h1, .hero__sub { text-wrap: balance; }
+.specs-more { margin-top: 10px; }
+@media (max-width: 640px) {
+  .hero2__in { padding-block: 22px 14px; gap: 16px; }
+  .hero2 h1 { font-size: 1.9rem; margin-bottom: 10px; }
+  .hero2 .hero__sub { font-size: .98rem; margin-bottom: 16px; }
+  .hero2__spot { display: grid; grid-template-columns: 44% 1fr; align-items: center; gap: 12px; padding: 10px; border-radius: 18px; }
+  .hero2__spot img { aspect-ratio: 4/3; border-radius: 10px; grid-row: span 2; }
+  .hero2__badge { position: static; justify-self: start; box-shadow: none; padding: 0; background: none; flex-wrap: wrap; font-size: 1rem; }
+  .hero2__name { font-size: .92rem; text-align: start; }
+  .related { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .diff { font-size: .74rem; }
+}
+.filters__actions { position: sticky; bottom: 0; z-index: 2; background: #fff; padding-block: 12px; box-shadow: 0 -8px 16px -12px rgba(16, 24, 40, .25); }

@@ -111,7 +111,8 @@ route('GET', '/:l/help-me-choose', async (ctx) => {
     const out = await recommend({ usage: answers.usage, budgetMin: r ? r.min : null, budgetMax: r ? r.max : null, apps: answers.apps || [], pref: answers.pref || 'balanced', reqs: answers.reqs || [] });
     result = out.recs;
   }
-  sendHtml(ctx, <WizardPage v={await makeView(ctx)} answers={answers} result={result} />);
+  const avail = new Set((await loadCatalog()).filter((i) => !i.is_accessory && i.available > 0).flatMap((i) => i.usages));
+  sendHtml(ctx, <WizardPage v={await makeView(ctx)} answers={answers} result={result} usages={[...avail]} />);
 });
 
 // ---------------------------------------------------------------- cart

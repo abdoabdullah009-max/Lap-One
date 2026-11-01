@@ -229,7 +229,7 @@ if (gallery) {
 const buyForm = $<HTMLFormElement>('.js-buyform');
 if (buyForm) {
   const base = Number(buyForm.dataset.base);
-  const fmt = (p: number) => new Intl.NumberFormat(L === 'ar' ? 'ar-EG' : 'en-EG', { maximumFractionDigits: 0 }).format(p / 100);
+  const fmt = (p: number) => new Intl.NumberFormat(L === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', { maximumFractionDigits: 0 }).format(p / 100);
   const money = (p: number) => (L === 'ar' ? `${fmt(p)} ج.م` : `EGP ${fmt(p)}`);
   const wa = $<HTMLAnchorElement>('.js-wa-product'); const waBase = buyForm.dataset.wa || '';
   const update = () => {

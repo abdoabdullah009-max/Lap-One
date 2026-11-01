@@ -18,7 +18,7 @@ const byId = new Map(D.items.map((i) => [i.id, i]));
 const bySlug = new Map(D.items.map((i) => [i.slug, i]));
 let L: 'ar' | 'en' = 'ar';
 const tr = (ar: string, en: string) => (L === 'ar' ? ar : en);
-const money = (p: number) => { const n = new Intl.NumberFormat(L === 'ar' ? 'ar-EG' : 'en-EG', { maximumFractionDigits: 0 }).format(p / 100); return L === 'ar' ? `${n} ج.م` : `EGP ${n}`; };
+const money = (p: number) => { const n = new Intl.NumberFormat(L === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', { maximumFractionDigits: 0 }).format(p / 100); return L === 'ar' ? `${n} ج.م` : `EGP ${n}`; };
 const esc = (s: string) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 function toast(msg: string) {
@@ -34,6 +34,7 @@ function counts() {
 
 // ---------------------------------------------------------------- routing
 function route() {
+  const tt = $('.toast'); if (tt) tt.hidden = true;
   const raw = location.hash.replace(/^#/, '') || '/ar';
   const [path, qs = ''] = raw.split('?');
   const sp = new URLSearchParams(qs);
@@ -95,8 +96,9 @@ function filterItems(sp: URLSearchParams) {
     && (!f.touch || i.touch) && (!f.convertible || i.convertible) && (!f.battery_known || i.battery_max !== null));
   const sort = sp.get('sort') || 'recommended';
   const stock = (a: any, b: any) => Number(b.available > 0) - Number(a.available > 0);
+  const complete = (i: any) => Number(!!(i.ram_gb && i.storage_gb && i.cpu_gen));
   items.sort((a, b) => stock(a, b) || (sort === 'price_asc' ? a.price - b.price : sort === 'price_desc' ? b.price - a.price : sort === 'newest' ? b.created - a.created
-    : (score.get(b.id) || 0) - (score.get(a.id) || 0) || b.value - a.value));
+    : (score.get(b.id) || 0) - (score.get(a.id) || 0) || complete(b) - complete(a) || (b.cpu_gen || 0) - (a.cpu_gen || 0) || b.value - a.value));
   return { items, understood };
 }
 function catalog(sp: URLSearchParams) {
@@ -148,7 +150,7 @@ function checkoutPage() {
       <div class="field"><label for="city">${tr('المنطقة / المدينة', 'Area / city')}</label><input id="city"></div>
       <div class="field"><label for="street">${tr('الشارع والعنوان', 'Street and address')}</label><input id="street"></div></div><p class="ship-quote muted js-quote"></p></section>
     <section class="cstep"><h2><span class="cstep__n">3</span>${tr('طريقة الدفع', 'Payment method')}</h2><div class="paylist">
-      ${[['cod', tr('الدفع عند الاستلام', 'Cash on delivery')], ['card', tr('بطاقة بنكية (Paymob)', 'Card (Paymob)')], ['transfer', tr('تحويل بنكي / InstaPay', 'Bank transfer / InstaPay')]].map(([v, l], i) => `<label class="payopt"><input type="radio" name="pm" value="${v}" ${i ? '' : 'checked'}><span><b>${l}</b></span></label>`).join('')}</div></section></div>
+      <label class="payopt"><input type="radio" name="pm" value="cod" checked><span><b>${tr('الدفع عند الاستلام', 'Cash on delivery')}</b><small>${tr('لو حابب طريقة دفع تانية، اتفق عليها مع فريق المبيعات على واتساب.', 'Prefer another method? Agree it with our sales team on WhatsApp.')}</small></span></label></div></section></div>
     <aside class="summary summary--sticky"><h2>${tr('مراجعة الطلب', 'Order review')}</h2><ul class="mini-lines">${state.cart.map((l) => `<li><img src="${byId.get(l.id).image}" alt="" width="56" height="42"><span>${esc(byId.get(l.id).title)}</span><b>${money(lineTotal(l))}</b></li>`).join('')}</ul>
     <dl><dt>${tr('المجموع الفرعي', 'Subtotal')}</dt><dd>${money(merch)}</dd><dt>${tr('الشحن', 'Shipping')}</dt><dd class="js-ship muted">${tr('يحدده فريق المبيعات', 'Confirmed by sales')}</dd><dt class="summary__total">${tr('الإجمالي', 'Total')}</dt><dd class="summary__total js-grand">${money(merch)}</dd></dl>
     <button class="btn btn--primary btn--lg btn--block">${tr('إرسال الطلب على واتساب', 'Send order on WhatsApp')}</button></aside></form></div>`;

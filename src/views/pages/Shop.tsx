@@ -78,7 +78,7 @@ export function noteText(v: View, n: Note) {
   return s;
 }
 
-export function WizardPage({ v, answers, result }: { v: View; answers: Partial<WizardAnswers> & { budget?: string }; result: Recommendation[] | null }) {
+export function WizardPage({ v, answers, result, usages }: { v: View; answers: Partial<WizardAnswers> & { budget?: string }; result: Recommendation[] | null; usages?: string[] }) {
   const { t, settings: s, locale } = v;
   const budgetLabel = (r: { min: number | null; max: number | null }) => r.min === null ? t('budget_under', { max: money(v, r.max!) }) : r.max === null ? t('budget_over', { min: money(v, r.min) }) : t('budget_between', { min: money(v, r.min), max: money(v, r.max) });
   return (
@@ -90,7 +90,7 @@ export function WizardPage({ v, answers, result }: { v: View; answers: Partial<W
             <input type="hidden" name="go" value="1" />
             <fieldset className="wstep" data-step="1">
               <legend><span className="wstep__n">1/5</span>{t('wq1')}</legend>
-              <div className="opts-grid">{USAGES.filter((u) => u !== 'budget').map((u, i) => (
+              <div className="opts-grid">{USAGES.filter((u) => u !== 'budget' && (!usages || usages.includes(u))).map((u, i) => (
                 <label key={u} className="optcard"><input type="radio" name="usage" value={u} required defaultChecked={answers.usage ? answers.usage === u : i === 0} /><span><Icon name={USAGE_ICON[u]} size={22} /><b>{t(`usage_${u}` as any)}</b><small>{t(`usage_${u}_d` as any)}</small></span></label>
               ))}</div>
             </fieldset>

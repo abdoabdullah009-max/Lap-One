@@ -61,8 +61,8 @@ export function CatalogPage({ v, d }: { v: View; d: CatalogData }) {
   const active: { key: string; value: string; label: string }[] = [];
   for (const g of GROUPS) for (const val of sel(g.key)) active.push({ key: g.key, value: val, label: labelFor(v, g.key, val, d) });
   for (const [k, l] of BOOLS) if ((f as any)[k]) active.push({ key: k, value: 'true', label: t(l) });
-  if (f.min) active.push({ key: 'min', value: String(f.min), label: `≥ ${f.min.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en')}` });
-  if (f.max) active.push({ key: 'max', value: String(f.max), label: `≤ ${f.max.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en')}` });
+  if (f.min) active.push({ key: 'min', value: String(f.min), label: `≥ ${f.min.toLocaleString(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en')}` });
+  if (f.max) active.push({ key: 'max', value: String(f.max), label: `≤ ${f.max.toLocaleString(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en')}` });
   const base = href(v, '/laptops');
   const hasFilters = active.length > 0 || !!f.q;
   return (
@@ -158,7 +158,7 @@ export function CatalogPage({ v, d }: { v: View; d: CatalogData }) {
                 <div className="chips">
                   {hasFilters ? <a className="chip" href={base}>{t('reset_filters')}</a> : null}
                   <a className="chip" href={href(v, '/help-me-choose')}>{t('hero_cta2')}</a>
-                  {['study', 'office', 'gaming', 'engineering'].map((u) => <a key={u} className="chip" href={href(v, `/laptops?usage=${u}`)}>{t(`usage_${u}` as any)}</a>)}
+                  {['study', 'office', 'engineering'].map((u) => <a key={u} className="chip" href={href(v, `/laptops?usage=${u}`)}>{t(`usage_${u}` as any)}</a>)}
                 </div>
               </div>
             )}
