@@ -8,13 +8,15 @@ import { getSettings } from '../src/server/services/settings';
 import { GOVERNORATES } from '../src/config/catalog';
 
 const BASE = process.env.BASE || 'http://localhost:3000';
+const SITE = process.env.STATIC_URL || 'https://abdoabdullah009-max.github.io/Lap-One/';
 const get = async (p: string) => { const r = await fetch(BASE + p); if (!r.ok) throw new Error(`${p} → ${r.status}`); return r.text(); };
 const mainOf = (h: string) => h.slice(h.indexOf('<main id="main" tabindex="-1">') + 30, h.lastIndexOf('</main>'));
 const img: Record<string, string> = {};
 const tok = (h: string) => h.replace(/\/img\/demo\/([\w.-]+\.svg)/g, (_m, f) => {
   if (!img[f]) img[f] = 'data:image/svg+xml;base64,' + fs.readFileSync(path.join('public/img/demo', f)).toString('base64');
   return `IMG:${f}`;
-}).replace(/href="\/(ar|en)/g, 'href="#/$1').replace(/<script[\s\S]*?<\/script>/g, '');
+}).replace(/href="\/(ar|en)/g, 'href="#/$1')
+  .split(encodeURIComponent(BASE + '/')).join(encodeURIComponent(SITE + '#/')).split(BASE + '/').join(SITE + '#/').replace(/<script[\s\S]*?<\/script>/g, '');
 
 async function main() {
   const items = (await loadCatalog()).map((i) => ({ ...i, image: i.image, perf: perfIndex(i), value: valueScore(i), created: +new Date(i.created_at) }));

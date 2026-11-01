@@ -259,6 +259,7 @@ async function main() {
   // settings (sample)
   const s: Partial<Settings> = {
     demo_mode: true,
+    contact: { ...DEFAULT_SETTINGS.contact, whatsapp: '201041125959' },
     announcements: [
       { ar: 'نسخة تجريبية — الطلبات لا تُشحن', en: 'Demo store — orders are not shipped', enabled: true },
       { ar: 'الشحن لمحافظات مختارة — التكلفة تظهر قبل تأكيد الطلب', en: 'Shipping to selected governorates — cost shown before you confirm', enabled: true },
