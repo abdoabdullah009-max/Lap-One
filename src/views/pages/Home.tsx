@@ -1,7 +1,7 @@
 import { brand } from '../../config/brand';
 import type { CatalogItem } from '../../server/services/catalog';
 import { Layout } from '../Layout';
-import { View, Icon, href, bi, money, ProductCard, GradeBadge, cpuShort, storageText } from '../ui';
+import { View, Icon, href, bi, money, ProductCard, GradeBadge } from '../ui';
 
 export interface HomeSection { key: string; title: [string, string]; tagline: string; href: string; items: CatalogItem[]; count: number }
 export interface HomeData {
@@ -10,45 +10,14 @@ export interface HomeData {
   reviews: { display_name: string; rating: number; body: string | null; title: string }[];
 }
 
-/** Spotlight tile: brand, bold model name, key specs, price — with a laptop image on a soft blue wave. */
-function FeatureTile({ v, it, i }: { v: View; it: CatalogItem; i: number }) {
-  const gpu = it.gpu_dedicated ? `${it.gpu_model}${it.vram_gb ? ` ${it.vram_gb}GB` : ''}` : null;
+/** Shop-by-usage circle: one product photo on a soft disc + label + count. */
+function UsageCircle({ v, s, i }: { v: View; s: HomeSection; i: number }) {
   return (
-    <a className="ftile reveal" style={{ ['--d' as any]: `${i * 60}ms` }} href={href(v, `/p/${it.slug}`)}>
-      <span className="ftile__text">
-        <span className="ftile__brand">{it.brand_name.replace(' Surface', '')}</span>
-        <b className="ftile__model">{it.family_name}</b>
-        <span className="ftile__spec"><Icon name="cpu" size={14} />{cpuShort(it)}</span>
-        {it.ram_gb ? <span className="ftile__spec">{it.ram_gb}GB · {storageText(v, it.storage_gb, it.storage_type)}</span> : null}
-        {gpu ? <span className="ftile__spec ftile__spec--gpu">{gpu}</span> : null}
-        <span className="ftile__price">{money(v, it.price)}</span>
-      </span>
-      <img className="ftile__img" src={it.image || ''} alt={it.title} width={800} height={600} loading={i < 3 ? 'eager' : 'lazy'} />
-      <span className="ftile__go" aria-hidden="true"><Icon name="arrow" size={18} className="flip-rtl" /></span>
+    <a className="ucircle reveal" style={{ ['--d' as any]: `${i * 50}ms` }} href={s.href}>
+      <span className="ucircle__disc"><img src={s.items[0]?.image || ''} alt="" width={400} height={300} loading="lazy" /></span>
+      <b>{s.title[0]} {s.title[1]}</b>
+      <small>{v.t('results', { n: s.count })}</small>
     </a>
-  );
-}
-
-/** Category band: overlapping product images, two-tone title, tagline, then a scrollable rail with arrows. */
-function CategorySection({ v, s, idx }: { v: View; s: HomeSection; idx: number }) {
-  const pics = s.items.slice(0, 3);
-  const railId = `rail-${s.key}`;
-  return (
-    <section className="catsec reveal" aria-labelledby={`h-${s.key}`} id={s.key}>
-      <a className={`catband${idx % 2 ? ' catband--alt' : ''}`} href={s.href}>
-        <span className="catband__pics" aria-hidden="true">{pics.map((p, k) => <img key={p.id} src={p.image || ''} alt="" width={400} height={300} loading="lazy" className={`catband__pic catband__pic--${k}`} />)}</span>
-        <span className="catband__text">
-          <h2 id={`h-${s.key}`} className="catband__title"><span>{s.title[0]}</span> {s.title[1]}</h2>
-          <span className="catband__tag">{s.tagline}</span>
-        </span>
-        <span className="catband__cta">{v.t('view_all')} ({s.count}) <Icon name="arrow" size={16} className="flip-rtl" /></span>
-      </a>
-      <div className="railwrap">
-        <button type="button" className="railnav railnav--prev js-rail" data-target={railId} data-dir="-1" aria-label={v.locale === 'ar' ? 'السابق' : 'Previous'}><Icon name="chevron" size={20} className="flip-rtl rot180" /></button>
-        <div className="rail rail--snap" id={railId} role="list">{s.items.map((it) => <div role="listitem" key={it.id}><ProductCard v={v} it={it} list={s.key} /></div>)}</div>
-        <button type="button" className="railnav railnav--next js-rail" data-target={railId} data-dir="1" aria-label={v.locale === 'ar' ? 'التالي' : 'Next'}><Icon name="chevron" size={20} className="flip-rtl" /></button>
-      </div>
-    </section>
   );
 }
 
@@ -62,6 +31,10 @@ export function HomePage({ v, d }: { v: View; d: HomeData }) {
     { icon: 'whatsapp', t: ar ? 'رد سريع على واتساب' : 'Fast WhatsApp replies', s: s.contact.whatsapp ? s.contact.whatsapp.replace(/^20/, '0') : '', on: !!s.contact.whatsapp },
   ].filter((p) => p.on);
   const h = d.hero;
+  const tabs = [
+    { key: 'top', label: ar ? 'مختارات' : 'Top picks', items: d.featured, href: href(v, '/laptops'), count: 0, more: ar ? 'شوف كل الأجهزة' : 'See all laptops' },
+    ...d.sections.map((sec) => ({ key: sec.key, label: `${sec.title[0]} ${sec.title[1]}`.replace('و ', 'و'), items: sec.items.slice(0, 8), href: sec.href, count: sec.count, more: '' })),
+  ].filter((tb) => tb.items.length);
   return (
     <Layout v={v} bodyClass="has-bnav" meta={{
       title: ar ? `${brand.name} | لابتوبات استيراد بمواصفات واضحة وضمان 6 شهور` : `${brand.name} | Imported laptops with clear specs and a 6-month warranty`,
@@ -93,27 +66,27 @@ export function HomePage({ v, d }: { v: View; d: HomeData }) {
       </section>
 
       <div className="container">
-        {d.featured.length ? (
-          <section className="section" aria-labelledby="featured-h">
-            <div className="section__head"><h2 id="featured-h">{ar ? 'موديلات مميزة' : 'Featured models'}</h2><a className="link-arrow" href={href(v, '/laptops')}>{t('view_all')}<Icon name="arrow" size={16} className="flip-rtl" /></a></div>
-            <div className="ftiles">{d.featured.map((it, i) => <FeatureTile key={it.id} v={v} it={it} i={i} />)}</div>
+        {d.sections.length ? (
+          <section className="section" aria-labelledby="use-h">
+            <div className="section__head section__head--center"><h2 id="use-h">{ar ? 'تسوّق حسب استخدامك' : 'Shop by what you do'}</h2></div>
+            <div className="ucircles">{d.sections.map((sec, i) => <UsageCircle key={sec.key} v={v} s={sec} i={i} />)}</div>
           </section>
         ) : null}
 
-        <section className="section" aria-labelledby="cats-h">
-          <div className="section__head"><h2 id="cats-h">{t('categories')}</h2></div>
-          <div className="cattiles">
-            {d.sections.map((sec, i) => (
-              <a key={sec.key} className="cattile reveal" style={{ ['--d' as any]: `${i * 50}ms` }} href={sec.href}>
-                <img src={sec.items[0]?.image || ''} alt="" width={400} height={300} loading="lazy" />
-                <span className="cattile__title"><span>{sec.title[0]}</span> {sec.title[1]}</span>
-                <small>{t('results', { n: sec.count })}</small>
-              </a>
-            ))}
+        <section className="section ptabs js-tabs" aria-labelledby="pt-h">
+          <div className="ptabs__head">
+            <h2 id="pt-h">{ar ? 'اختار جهازك' : 'Pick your laptop'}</h2>
+            <div className="ptabs__list" role="tablist" aria-labelledby="pt-h">
+              {tabs.map((tb, i) => <button key={tb.key} type="button" role="tab" id={`tab-${tb.key}`} aria-controls={`panel-${tb.key}`} aria-selected={i === 0} tabIndex={i === 0 ? 0 : -1} className="ptabs__tab js-tab">{tb.label}</button>)}
+            </div>
           </div>
+          {tabs.map((tb, i) => (
+            <div key={tb.key} role="tabpanel" id={`panel-${tb.key}`} aria-labelledby={`tab-${tb.key}`} hidden={i !== 0} className="ptabs__panel">
+              <div className="grid grid--home">{tb.items.map((it) => <ProductCard key={it.id} v={v} it={it} list={`home_${tb.key}`} />)}</div>
+              <div className="ptabs__more"><a className="btn btn--outline" href={tb.href}>{tb.more || (ar ? `شوف كل ${tb.label} (${tb.count})` : `See all ${tb.label} (${tb.count})`)}<Icon name="arrow" size={16} className="flip-rtl" /></a></div>
+            </div>
+          ))}
         </section>
-
-        {d.sections.map((sec, i) => <CategorySection key={sec.key} v={v} s={sec} idx={i} />)}
 
         <section className="section js-recent" hidden aria-labelledby="recent"><div className="section__head"><h2 id="recent">{t('recently_viewed')}</h2></div><div className="rail js-recent-rail" /></section>
 

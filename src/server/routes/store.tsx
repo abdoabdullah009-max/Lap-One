@@ -47,9 +47,9 @@ route('GET', '/:l', async (ctx) => {
   for (const i of laptops) { const b = brands.get(i.brand_slug) || { slug: i.brand_slug, name: i.brand_name, count: 0 }; b.count++; brands.set(i.brand_slug, b); }
   // Featured: fully-specified, in stock, one per model family, premium first
   const hero = [...inStock].filter((i) => i.ram_gb && i.storage_gb && i.cpu_model).sort((a, b) => b.available - a.available || valueScore(b) - valueScore(a))[0] || null;
-  const seen = new Set<number>(hero ? [hero.family_id] : []);
+  const seen = new Set<number>();
   const featured = [...inStock].filter((i) => i.ram_gb && i.storage_gb && i.cpu_model).sort((a, b) => b.price - a.price)
-    .filter((i) => (seen.has(i.family_id) ? false : (seen.add(i.family_id), true))).slice(0, 6);
+    .filter((i) => (seen.has(i.family_id) ? false : (seen.add(i.family_id), true))).slice(0, 8);
   const defs: { key: string; title: [string, string]; tagline: string; match: (i: CatalogItem) => boolean; q: string }[] = [
     { key: 'workstation', title: ar ? ['محطات', 'العمل'] : ['Workstation', 'laptops'], tagline: ar ? 'قوة تشتغل عليها بثقة — هندسة، تصميم، ومونتاج' : 'Power you can rely on — engineering, design and editing', match: (i) => i.usages.includes('workstation'), q: 'usage=workstation' },
     { key: 'business', title: ar ? ['أجهزة', 'البيزنس'] : ['Business', 'laptops'], tagline: ar ? 'أداء ثابت واعتمادية لشغل كل يوم' : 'Steady performance for everyday work', match: (i) => i.usages.includes('office'), q: 'usage=office' },

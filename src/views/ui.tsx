@@ -92,6 +92,9 @@ export function ProductCard({ v, it, list }: { v: View; it: CatalogItem; list?: 
   const inWish = v.wishIds.includes(it.id);
   const inCmp = v.compareIds.includes(it.id);
   const url = href(v, `/p/${it.slug}`);
+  const wa = waLink(v, v.locale === 'ar'
+    ? `مرحبًا، مهتم بالجهاز ده:\n${it.title}\nالسعر: ${money(v, it.price)}\n${v.baseUrl}${url}`
+    : `Hi, I'm interested in:\n${it.title}\nPrice: ${money(v, it.price)}\n${v.baseUrl}${url}`);
   return (
     <article className={`card${it.available < 1 ? ' card--out' : ''}`} data-id={it.id} data-list={list}>
       <a href={url} className="card__media" tabIndex={-1} aria-hidden="true">
@@ -125,10 +128,13 @@ export function ProductCard({ v, it, list }: { v: View; it: CatalogItem; list?: 
               {it.warranty_months ? <span className="muted">· {v.t('warranty_months', { n: it.warranty_months })}</span> : null}
             </div>
           </div>
-          <form method="post" action={href(v, '/cart/add')} className="js-add">
-            <input type="hidden" name="variant_id" value={it.id} />
-            <button className="btn btn--icon btn--primary" disabled={it.available < 1} aria-label={`${v.t('add_to_cart')}: ${it.title}`}><Icon name="cart" size={18} /></button>
-          </form>
+          <div className="card__acts">
+            {wa ? <a className="btn btn--icon btn--wa js-wa" data-source="whatsapp_card" data-variant={it.id} href={wa} target="_blank" rel="noopener" aria-label={`${v.t('ask_whatsapp')}: ${it.title}`}><Icon name="whatsapp" size={18} /></a> : null}
+            <form method="post" action={href(v, '/cart/add')} className="js-add">
+              <input type="hidden" name="variant_id" value={it.id} />
+              <button className="btn btn--icon btn--primary" disabled={it.available < 1} aria-label={`${v.t('add_to_cart')}: ${it.title}`}><Icon name="cart" size={18} /></button>
+            </form>
+          </div>
         </div>
         {it.is_sample ? <span className="sample-tag">{v.t('sample_badge')}</span> : null}
       </div>

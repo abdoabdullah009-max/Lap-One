@@ -1,3 +1,4 @@
+import { setupTabs } from './tabs';
 /* Runtime for the single-file static demo (index.html). Hash routing over pre-rendered pages,
    client-side search/filter using the same query parser as the server, in-memory cart/compare/wishlist.
    No order is ever sent anywhere. */
@@ -190,6 +191,7 @@ function wizardResults(sp: URLSearchParams) {
 
 // ---------------------------------------------------------------- behaviours
 function enhance(root: HTMLElement) {
+  setupTabs(root);
   // rails + reveal
   $$<HTMLButtonElement>('.js-rail', root).forEach((btn) => {
     const rail = document.getElementById(btn.dataset.target || ''); if (!rail) return;

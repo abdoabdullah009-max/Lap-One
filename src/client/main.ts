@@ -1,3 +1,4 @@
+import { setupTabs } from './tabs';
 /* LAP ONE storefront client. Progressive enhancement: every feature here has a server-rendered fallback. */
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector(s) as T | null;
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => Array.from(r.querySelectorAll(s)) as T[];
@@ -364,4 +365,4 @@ function setupReveal(root: ParentNode = document) {
   els.forEach((e) => io.observe(e));
 }
 document.documentElement.classList.add('js-ready');
-setupRails(); setupReveal();
+setupRails(); setupReveal(); setupTabs();

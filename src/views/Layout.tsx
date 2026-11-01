@@ -183,10 +183,10 @@ function Footer({ v }: { v: View }) {
         <div>
           <h3>{t('contact_us')}</h3>
           <ul className="footer__contact">
-            <li><Icon name="phone" size={16} />{c.phone ? <a href={`tel:${c.phone}`} dir="ltr">{c.phone}</a> : <span className="muted">{t('not_set')}</span>}</li>
-            <li><Icon name="whatsapp" size={16} />{c.whatsapp ? <a href={waLink(v, '') || '#'} dir="ltr" target="_blank" rel="noopener">{c.whatsapp.replace(/^20/, '0')}</a> : <span className="muted">{t('not_set')}</span>}</li>
-            <li><Icon name="mail" size={16} />{c.email ? <a href={`mailto:${c.email}`}>{c.email}</a> : <span className="muted">{t('not_set')}</span>}</li>
-            <li><Icon name="pin" size={16} />{bi(v, c.address) || <span className="muted">{t('not_set')}</span>}</li>
+            {c.phone ? <li><Icon name="phone" size={16} /><a href={`tel:${c.phone}`} dir="ltr">{c.phone}</a></li> : null}
+            {c.whatsapp ? <li><Icon name="whatsapp" size={16} /><a href={waLink(v, '') || '#'} dir="ltr" target="_blank" rel="noopener">{c.whatsapp.replace(/^20/, '0')}</a></li> : null}
+            {c.email ? <li><Icon name="mail" size={16} /><a href={`mailto:${c.email}`}>{c.email}</a></li> : null}
+            {bi(v, c.address) ? <li><Icon name="pin" size={16} />{bi(v, c.address)}</li> : null}
             {bi(v, c.hours) ? <li><Icon name="clock" size={16} />{bi(v, c.hours)}</li> : null}
           </ul>
           {social.length ? <><h3>{t('follow')}</h3><ul className="footer__social">{social.map(([k, url]) => <li key={k}><a href={url} target="_blank" rel="noopener">{k}</a></li>)}</ul></> : null}
