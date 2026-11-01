@@ -615,3 +615,4 @@ h1, h2, h3, h4 { color: var(--navy); }
 .wa-fab { box-shadow: 0 8px 24px -6px rgba(31, 168, 85, .6); }
 .hero h1 { font-size: clamp(2rem, 1.3rem + 3.2vw, 3.4rem); line-height: 1.15; font-weight: 700; }
 .hero__sub { font-size: clamp(1rem, .95rem + .35vw, 1.2rem); color: var(--g-700); }
+.cond-summary { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; }

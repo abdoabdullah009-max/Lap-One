@@ -58,10 +58,11 @@ async function main() {
       const slug = `${fslug}-${slugify(cpuShort)}${r.ram[0] ? `-${r.ram[0]}gb` : ''}`;
       const sku = `LO-${++n}`;
       const v = await one<any>(q, `INSERT INTO product_variants(family_id, slug, sku, title, inventory_mode, grade, cpu_brand, cpu_model, cpu_tier, cpu_gen, ram_gb, ram_type,
-          storage_gb, storage_type, gpu_brand, gpu_model, gpu_dedicated, vram_gb, screen_in, touch, convertible, os, usages, price, published, is_sample)
-        VALUES ($1,$2,$3,$4,$5,NULL,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,TRUE,FALSE) RETURNING id`,
+          storage_gb, storage_type, gpu_brand, gpu_model, gpu_dedicated, vram_gb, screen_in, touch, convertible, os, usages, price, published, is_sample,
+          warranty_months, warranty_text_ar, warranty_text_en)
+        VALUES ($1,$2,$3,$4,$5,'excellent',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,TRUE,FALSE,$24,$25,$26) RETURNING id`,
         [fam.id, slug, sku, title, r.qty > 1 ? 'batch' : 'unique', r.cpu[0], r.cpu[1], r.cpu[2], r.cpu[3], r.ram[0], r.ram[1], r.storage[0], r.storage[1],
-          r.gpu[0], r.gpu[1], r.gpu[2], r.gpu[3], r.screen, r.touch ?? null, r.convertible ?? (r.family.includes('Surface Laptop') ? false : null), r.os ?? null, r.usages, EGP(r.price)]);
+          r.gpu[0], r.gpu[1], r.gpu[2], r.gpu[3], r.screen, r.touch ?? null, r.convertible ?? (r.family.includes('Surface Laptop') ? false : null), r.os ?? null, r.usages, EGP(r.price), 6, 'ضمان 6 شهور + استبدال أو استرجاع خلال 14 يوم من الاستلام', '6-month warranty + exchange or return within 14 days of delivery']);
       for (const u of r.usages) await q.query('INSERT INTO variant_categories VALUES ($1,$2)', [v.id, catIds[u]]);
       for (const [i, view] of ['front', 'angle', 'closed'].entries())
         await q.query(`INSERT INTO product_images(variant_id,url,alt,kind,width,height,sort) VALUES ($1,$2,$3,'representative',800,600,$4)`, [v.id, `/img/demo/${fslug}-${view}.svg`, title, i]);
@@ -78,12 +79,20 @@ async function main() {
     demo_mode: false,
     contact: { ...DEFAULT_SETTINGS.contact, whatsapp: '201041125959' },
     announcements: [{ ar: 'للطلب والاستفسار: واتساب 01041125959', en: 'Orders & questions: WhatsApp 01041125959', enabled: true }],
-    trust: Object.fromEntries(Object.entries(DEFAULT_SETTINGS.trust).map(([k, x]) => [k, { ...x, enabled: false }])),
-    policies: { warranty: B(), shipping: B(), returns: B(), privacy: B(), terms: B(), about: B(), inspection: B() },
+    trust: {
+      ...Object.fromEntries(Object.entries(DEFAULT_SETTINGS.trust).map(([k, x]) => [k, { ...x, enabled: false }])),
+      warranty: { enabled: true, title: B('ضمان 6 شهور', '6-month warranty'), body: B('كل الأجهزة عليها ضمان 6 شهور.', 'Every laptop comes with a 6-month warranty.') },
+      shipping_returns: { enabled: true, title: B('استبدال أو استرجاع خلال 14 يوم', 'Exchange or return within 14 days'), body: B('تقدر تستبدل أو ترجّع الجهاز خلال 14 يوم من الاستلام.', 'You can exchange or return the laptop within 14 days of delivery.') },
+      grading: { enabled: true, title: B('حالة ممتازة', 'Excellent condition'), body: B('كل الأجهزة المعروضة حالتها ممتازة.', 'All listed laptops are in excellent condition.') },
+    },
+    policies: { warranty: B('كل الأجهزة عليها ضمان 6 شهور من تاريخ الاستلام.\n\nلتفاصيل التغطية أو لو عندك أي مشكلة في الجهاز، كلمنا على واتساب 01041125959.', 'Every laptop comes with a 6-month warranty from the delivery date.\n\nFor coverage details or any issue with your laptop, message us on WhatsApp 01041125959.'),
+      returns: B('تقدر تستبدل أو ترجّع الجهاز خلال 14 يوم من تاريخ الاستلام.\n\nلطلب استبدال أو استرجاع، كلمنا على واتساب 01041125959.', 'You can exchange or return your laptop within 14 days of delivery.\n\nTo request an exchange or return, message us on WhatsApp 01041125959.'),
+      shipping: B(), privacy: B(), terms: B(), about: B(), inspection: B() },
     payments: { ...DEFAULT_SETTINGS.payments, cod: { enabled: true, max_order: null } },
     faq: [
       { q: B('هل الأجهزة جديدة؟', 'Are the laptops new?'), a: B('لا، الأجهزة مستوردة مستعملة. المواصفات مكتوبة في صفحة كل جهاز.', 'No — they are imported pre-owned laptops. Specs are listed on each device page.') },
       { q: B('إزاي أطلب؟', 'How do I order?'), a: B('أضف الجهاز للسلة وأكمل البيانات، وهيتبعت طلبك على واتساب 01041125959 لتأكيده مع فريق المبيعات.', 'Add the laptop to your cart and fill in your details; your order is sent on WhatsApp 01041125959 to confirm with our sales team.') },
+      { q: B('فيه ضمان؟', 'Is there a warranty?'), a: B('أيوه، ضمان 6 شهور على كل الأجهزة، واستبدال أو استرجاع خلال 14 يوم من الاستلام.', 'Yes — a 6-month warranty on every laptop, plus exchange or return within 14 days of delivery.') },
       { q: B('تكلفة الشحن كام؟', 'How much is shipping?'), a: B('فريق المبيعات بيأكدلك تكلفة ومدة الشحن حسب محافظتك قبل تأكيد الطلب.', 'Our sales team confirms the shipping cost and time for your governorate before confirming the order.') },
     ],
   };
