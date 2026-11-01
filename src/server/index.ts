@@ -38,6 +38,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse) {
   if (ctx.method === 'GET' || ctx.method === 'HEAD') {
     if (pathname.startsWith('/assets/') && serveStatic(ctx, path.join(PUBLIC, 'assets'), pathname.slice(8), url.searchParams.has('v'))) return;
     if (pathname.startsWith('/img/') && serveStatic(ctx, path.join(PUBLIC, 'img'), pathname.slice(5), false)) return;
+    if (pathname.startsWith('/brand/') && serveStatic(ctx, path.join(PUBLIC, 'brand'), pathname.slice(7), false)) return;
     if (pathname.startsWith('/uploads/') && serveStatic(ctx, UPLOADS, pathname.slice(9), true)) return;
     if (pathname === '/favicon.svg' && serveStatic(ctx, PUBLIC, 'favicon.svg')) return;
     if (pathname === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }

@@ -7,13 +7,13 @@
 export const brand = {
   name: 'LAP ONE',
   // Temporary text mark — replace with the approved logo file in /public/brand/ when available.
-  logoIsTemporary: true,
-  logoUrl: null as string | null,
+  logoIsTemporary: false,
+  logoUrl: '/brand/logo.png' as string | null,
   colors: {
-    navy: '#0B1F44',
+    navy: '#071B3A',
     navyDeep: '#071631',
-    electric: '#1D5BFF',
-    electricHover: '#1446D6',
+    electric: '#0060FF',
+    electricHover: '#004FD6',
     gray50: '#F6F7F9',
     gray100: '#EEF0F4',
     gray200: '#E1E5EC',

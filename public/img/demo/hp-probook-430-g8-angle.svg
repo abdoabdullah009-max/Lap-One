@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="ProBook 430 G8"><rect width="800" height="600" fill="#F4F6F9"/>
+    <ellipse cx="420" cy="505" rx="300" ry="20" fill="#000" opacity=".08"/>
+    <path d="M190 80 L560 40 L600 360 L230 400 Z" fill="#B8BEC8"/><path d="M200 90 L552 52 L590 350 L238 388 Z" fill="#0B1F44"/>
+    <text x="395" y="230" text-anchor="middle" transform="rotate(-6 395 230)" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700" fill="#fff">ProBook 430 G8</text>
+    <path d="M230 400 L600 360 L720 470 L320 500 Z" fill="#D9DDE3"/><path d="M320 500 L720 470 L722 482 L322 512 Z" fill="#B8BEC8"/>
+    <path d="M300 420 L590 390 L650 445 L355 470 Z" fill="#2A2F38" opacity=".7"/></svg>

@@ -564,3 +564,52 @@ body.has-buybar .wa-fab, body.checkout-body .wa-fab { display: none; }
   .card__specs li .icon { display: none; }
   .announce__track span:not(:first-child) { display: none; }
 }
+
+/* ===== Brand theme (from the LAP ONE logo): bright blue + white lead, dark navy only in the logo ===== */
+:root {
+  --blue: #0060FF; --blue-h: #004FD6; --blue-50: #EEF4FF; --blue-100: #D6E5FF; --blue-200: #B3CEFF;
+  --navy: #101828; --navy-80: #344054; --navy-2: #101828; --brand-navy: #071B3A;
+}
+.logo__img { height: 28px; width: auto; display: block; }
+@media (max-width: 520px) { .logo__img { height: 22px; } }
+h1, h2, h3, h4 { color: var(--navy); }
+.announce { background: var(--blue); color: #fff; }
+.nav__cats > summary { background: var(--blue); color: #fff; }
+.nav__cats > summary:hover, .nav__cats[open] > summary { background: var(--blue-h); }
+.nav__wizard { color: var(--blue) !important; }
+.search__btn { background: var(--blue); } .search__btn:hover { background: var(--blue-h); }
+.search input:focus { border-color: var(--blue); }
+.btn--outline { --fg: var(--blue); --bd: var(--blue); }
+.btn--outline:hover { --bg: var(--blue); color: #fff; }
+.hero { background: linear-gradient(180deg, #EEF4FF 0%, #F7FAFF 60%, #fff 100%); }
+.hero h1 { color: var(--navy); }
+.hero__product { background: linear-gradient(160deg, #1A73FF, var(--blue)); box-shadow: 0 24px 48px -20px rgba(0, 96, 255, .55); }
+.hero__chip { color: var(--blue-h); }
+.usage__icon { background: var(--blue-50); color: var(--blue); }
+.usage:hover { border-color: var(--blue); }
+.trust { background: var(--blue-50); color: var(--g-700); }
+.trust h2 { color: var(--navy); }
+.trust__item { background: #fff; border: 1px solid var(--blue-100); }
+.trust__item h3 { color: var(--navy); } .trust__item p { color: var(--g-700); }
+.trust__icon { background: var(--blue-50); color: var(--blue); }
+.trust__item .link-arrow { color: var(--blue); }
+.trust .grades__item p { color: var(--g-700); }
+.footer { background: #F5F8FF; color: var(--g-700); border-top: 3px solid var(--blue); }
+.footer h3 { color: var(--navy); }
+.footer a { color: var(--g-700); } .footer a:hover { color: var(--blue); }
+.footer__contact .muted, .footer__note { color: var(--g-400); }
+.footer__bottom { border-top-color: var(--g-200); }
+.lp-hero { background: linear-gradient(160deg, #1A73FF, var(--blue)); color: #E6EFFF; }
+.cmpbar__in, .toast { background: var(--blue); }
+.cmpbar .btn--ghost { color: #E6EFFF; }
+.toast a { color: #fff; text-decoration: underline; }
+.pager__cur { background: var(--blue); border-color: var(--blue); }
+.wstep__n, .cstep__n, .rec__match { background: var(--blue); }
+.rec--top { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue), var(--sh-2); }
+.grade--very_good { color: var(--blue-h); background: var(--blue-50); border-color: var(--blue-100); }
+.gallery__thumb.is-on, .variant.is-on, .opt:has(input:checked), .payopt:has(input:checked) { border-color: var(--blue); }
+.pdp-tabs a:hover { border-color: var(--blue); }
+.keyspecs li { background: var(--blue-50); }
+.keyspecs .icon { color: var(--blue); }
+.sp-item[aria-selected="true"], .sp-item:hover { background: var(--blue-50); }
+.wa-fab { box-shadow: 0 8px 24px -6px rgba(31, 168, 85, .6); }

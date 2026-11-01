@@ -15,7 +15,8 @@ const img: Record<string, string> = {};
 const tok = (h: string) => h.replace(/\/img\/demo\/([\w.-]+\.svg)/g, (_m, f) => {
   if (!img[f]) img[f] = 'data:image/svg+xml;base64,' + fs.readFileSync(path.join('public/img/demo', f)).toString('base64');
   return `IMG:${f}`;
-}).replace(/href="\/(ar|en)/g, 'href="#/$1')
+}).replace(/\/brand\/logo\.png/g, 'data:image/png;base64,' + fs.readFileSync('public/brand/logo.png').toString('base64'))
+  .replace(/href="\/(ar|en)/g, 'href="#/$1')
   .split(encodeURIComponent(BASE + '/')).join(encodeURIComponent(SITE + '#/')).split(BASE + '/').join(SITE + '#/').replace(/<script[\s\S]*?<\/script>/g, '');
 
 async function main() {
@@ -38,12 +39,12 @@ async function main() {
   const zones = (await many<any>(db, 'SELECT governorates, fee, free_threshold, eta_min_days, eta_max_days FROM shipping_zones WHERE active AND fee IS NOT NULL'))
     .map((z) => ({ gov: z.governorates, fee: z.fee, free: z.free_threshold, min: z.eta_min_days, max: z.eta_max_days }));
   const st = await getSettings();
-  const data = { shell, pages, cards, items: slim, zones, govs: GOVERNORATES, budgets: st.budget_ranges, img };
+  const data = { shell, pages, cards, items: slim, zones, govs: GOVERNORATES, wa: st.contact.whatsapp, budgets: st.budget_ranges, img };
   const js = (await esbuild.build({ entryPoints: ['src/client/static.ts'], bundle: true, write: false, minify: true, format: 'iife', target: ['es2020'], define: { __DATA__: 'window.__DATA__' } })).outputFiles[0].text;
   const css = fs.readFileSync('public/assets/app.css', 'utf8');
   const fav = 'data:image/svg+xml;base64,' + fs.readFileSync('public/favicon.svg').toString('base64');
   const html = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAP ONE — لابتوبات استيراد مفحوصة (نسخة عرض)</title><meta name="description" content="نسخة عرض ثابتة لمتجر LAP ONE">
+<title>LAP ONE — لابتوبات استيراد بمواصفات واضحة</title><meta name="description" content="LAP ONE — لابتوبات استيراد بمواصفات واضحة وأسعار بالجنيه المصري. للطلب واتساب 01041125959"><meta name="theme-color" content="#0060FF">
 <link rel="icon" href="${fav}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
 <style>${css}</style></head><body><main id="boot" style="padding:40px;text-align:center">LAP ONE…</main>
 <script>window.__DATA__=${JSON.stringify(data).replace(/</g, '\\u003c')};</script><script>${js}</script></body></html>`;

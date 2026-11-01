@@ -6,7 +6,7 @@ import { parseQuery, textScore } from '../server/services/search';
 declare const __DATA__: {
   shell: Record<string, string>; pages: Record<string, string>; cards: Record<string, Record<number, string>>;
   items: any[]; zones: { gov: string[]; fee: number; free: number | null; min: number | null; max: number | null }[];
-  govs: [string, string, string][]; budgets: { min: number | null; max: number | null }[];
+  govs: [string, string, string][]; wa: string; budgets: { min: number | null; max: number | null }[];
 };
 const D = __DATA__ as typeof __DATA__ & { img: Record<string, string> };
 const hyd = (h: string) => h.replace(/IMG:([\w.-]+)/g, (_m, k) => D.img[k] || '');
@@ -136,7 +136,7 @@ function cartPage() {
 function checkoutPage() {
   if (!state.cart.length) return cartPage();
   const merch = state.cart.reduce((s, l) => s + lineTotal(l), 0);
-  return `<div class="container"><h1>${tr('إتمام الطلب', 'Checkout')}</h1><p class="note note--warn">${tr('نسخة عرض: لن يتم إرسال أي طلب أو دفع حقيقي.', 'Demo copy: no order or payment is sent.')}</p>
+  return `<div class="container"><h1>${tr('إتمام الطلب', 'Checkout')}</h1><p class="note note--info">${tr('بعد ما تضغط تأكيد، هيتفتح واتساب برسالة فيها طلبك. فريق المبيعات هيأكدلك التوفر وتكلفة الشحن قبل أي دفع.', 'After you confirm, WhatsApp opens with your order. Our sales team confirms availability and shipping cost before any payment.')}</p>
   <form class="checkout js-demo-checkout" novalidate data-merch="${merch}"><div class="checkout__main">
     <section class="cstep"><h2><span class="cstep__n">1</span>${tr('بيانات التواصل', 'Contact details')}</h2><div class="fields">
       <div class="field"><label for="name">${tr('الاسم بالكامل', 'Full name')}</label><input id="name" required minlength="3"></div>
@@ -148,12 +148,12 @@ function checkoutPage() {
     <section class="cstep"><h2><span class="cstep__n">3</span>${tr('طريقة الدفع', 'Payment method')}</h2><div class="paylist">
       ${[['cod', tr('الدفع عند الاستلام', 'Cash on delivery')], ['card', tr('بطاقة بنكية (Paymob)', 'Card (Paymob)')], ['transfer', tr('تحويل بنكي / InstaPay', 'Bank transfer / InstaPay')]].map(([v, l], i) => `<label class="payopt"><input type="radio" name="pm" value="${v}" ${i ? '' : 'checked'}><span><b>${l}</b></span></label>`).join('')}</div></section></div>
     <aside class="summary summary--sticky"><h2>${tr('مراجعة الطلب', 'Order review')}</h2><ul class="mini-lines">${state.cart.map((l) => `<li><img src="${byId.get(l.id).image}" alt="" width="56" height="42"><span>${esc(byId.get(l.id).title)}</span><b>${money(lineTotal(l))}</b></li>`).join('')}</ul>
-    <dl><dt>${tr('المجموع الفرعي', 'Subtotal')}</dt><dd>${money(merch)}</dd><dt>${tr('الشحن', 'Shipping')}</dt><dd class="js-ship">—</dd><dt class="summary__total">${tr('الإجمالي', 'Total')}</dt><dd class="summary__total js-grand">${money(merch)}</dd></dl>
-    <button class="btn btn--primary btn--lg btn--block">${tr('تأكيد الطلب (تجريبي)', 'Place order (demo)')}</button></aside></form></div>`;
+    <dl><dt>${tr('المجموع الفرعي', 'Subtotal')}</dt><dd>${money(merch)}</dd><dt>${tr('الشحن', 'Shipping')}</dt><dd class="js-ship muted">${tr('يحدده فريق المبيعات', 'Confirmed by sales')}</dd><dt class="summary__total">${tr('الإجمالي', 'Total')}</dt><dd class="summary__total js-grand">${money(merch)}</dd></dl>
+    <button class="btn btn--primary btn--lg btn--block">${tr('إرسال الطلب على واتساب', 'Send order on WhatsApp')}</button></aside></form></div>`;
 }
 function quote(gov: string, merch: number) {
   const z = D.zones.find((x) => x.gov.includes(gov));
-  if (!z) return { ok: false, fee: 0, text: tr('التوصيل لهذه المحافظة لم يُفعّل بعد.', 'Delivery to this governorate is not set up yet.') };
+  if (!z) return { ok: true, fee: 0, unknown: true, text: tr('تكلفة ومدة الشحن لمحافظتك هيأكدها فريق المبيعات على واتساب.', 'Shipping cost and time for your governorate are confirmed by our sales team on WhatsApp.') };
   const fee = z.free !== null && merch >= z.free ? 0 : z.fee;
   return { ok: true, fee, text: z.min && z.max ? tr(`التوصيل المتوقع: ${z.min}–${z.max} أيام عمل`, `Estimated delivery: ${z.min}–${z.max} business days`) : '' };
 }
@@ -183,7 +183,7 @@ function wizardResults(sp: URLSearchParams) {
   items = items.map((i) => ({ i, s: (i.usages.includes(usage) ? 8 : 0) + i.perf * (pref === 'performance' ? 1.6 : 1) + (pref === 'portable' && i.weight_kg ? (i.weight_kg <= 1.4 ? 6 : i.weight_kg > 2 ? -4 : 0) : 0) }))
     .sort((a: any, c: any) => c.s - a.s).slice(0, 5).map((x: any) => x.i);
   return `<div class="container container--narrow"><div class="wresults__head"><h1>${tr('ترشيحاتنا لك', 'Our recommendations')}</h1><a class="btn btn--ghost btn--sm" href="#/${L}/help-me-choose">${tr('ابدأ من جديد', 'Start over')}</a></div>
-    <p class="note note--info">${tr('في النسخة الكاملة على السيرفر، كل ترشيح بيوضح ليه يناسبك، نقاط قوته وحدوده. هنا ترتيب مبسّط من نفس المخزون.', 'On the full server version each pick explains why it fits, its strengths and limits. This is a simplified ranking of the same stock.')}</p>
+    <p class="note note--info">${tr('ترشيحات من الأجهزة المتاحة حاليًا. محتاج رأي؟ كلمنا على واتساب.', 'Picks from laptops in stock now. Need advice? Message us on WhatsApp.')}</p>
     ${items.length ? `<div class="grid">${items.map((i: any) => D.cards[L][i.id]).join('')}</div>` : `<div class="empty"><p>${tr('مفيش أجهزة متاحة تطابق كل اختياراتك.', 'No in-stock laptops match all your choices.')}</p></div>`}</div>`;
 }
 
@@ -216,7 +216,7 @@ function enhance(root: HTMLElement) {
   const co = $<HTMLFormElement>('.js-demo-checkout', root);
   if (co) {
     const merch = Number(co.dataset.merch);
-    $('#gov', co)!.addEventListener('change', (e) => { const q = quote((e.target as HTMLSelectElement).value, merch); $('.js-quote', co)!.textContent = q.text; $('.js-ship', co)!.textContent = q.ok ? (q.fee ? money(q.fee) : tr('مجاني', 'Free')) : '—'; $('.js-grand', co)!.textContent = money(merch + q.fee); });
+    $('#gov', co)!.addEventListener('change', (e) => { const q = quote((e.target as HTMLSelectElement).value, merch); $('.js-quote', co)!.textContent = q.text; $('.js-ship', co)!.textContent = (q as any).unknown ? tr('يحدده فريق المبيعات', 'Confirmed by sales') : q.ok ? (q.fee ? money(q.fee) : tr('مجاني', 'Free')) : '—'; $('.js-grand', co)!.textContent = money(merch + q.fee); });
   }
 }
 
@@ -264,12 +264,17 @@ function onSubmit(e: Event) {
     const phone = ($('#phone', f) as HTMLInputElement).value.replace(/\s/g, '');
     const name = ($('#name', f) as HTMLInputElement).value.trim(); const gov = ($('#gov', f) as HTMLSelectElement).value;
     if (name.length < 3 || !/^01[0125]\d{8}$/.test(phone) || !gov) return toast(tr('اكمل الاسم ورقم موبايل مصري صحيح والمحافظة', 'Enter a name, a valid Egyptian mobile and governorate'));
-    if (!quote(gov, Number(f.dataset.merch)).ok) return toast(tr('التوصيل لهذه المحافظة لم يُفعّل بعد', 'Delivery to this governorate is not set up'));
+    const govName = (D.govs.find((g) => g[0] === gov) || [])[L === 'ar' ? 1 : 2] || gov;
+    const pm = (($('input[name=pm]:checked', f) as HTMLInputElement | null)?.closest('label')?.textContent || '').trim();
+    const lines = state.cart.map((l) => `• ${byId.get(l.id).title}${l.opts.length ? ` (${l.opts.map((o) => o.label).join('، ')})` : ''} × ${l.qty} — ${money(lineTotal(l))}`).join('\n');
+    const msg = tr(`طلب جديد من الموقع:\n${lines}\nالإجمالي (بدون الشحن): ${money(Number(f.dataset.merch))}\n\nالاسم: ${name}\nالموبايل: ${phone}\nالعنوان: ${govName} — ${($('#city', f) as HTMLInputElement).value} — ${($('#street', f) as HTMLInputElement).value}\nطريقة الدفع المفضلة: ${pm}`,
+      `New order from the website:\n${lines}\nTotal (excl. shipping): ${money(Number(f.dataset.merch))}\n\nName: ${name}\nMobile: ${phone}\nAddress: ${govName} — ${($('#city', f) as HTMLInputElement).value} — ${($('#street', f) as HTMLInputElement).value}\nPreferred payment: ${pm}`);
+    window.open(`https://wa.me/${D.wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
     state.cart = []; counts();
-    $('#main')!.innerHTML = `<div class="container container--narrow"><div class="order-hero"><span class="order-hero__icon">✓</span><div><h1>${tr('هذه نسخة عرض', 'This is a demo copy')}</h1><p>${tr('لم يتم إنشاء أو إرسال أي طلب. في النسخة الكاملة يتم حجز الجهاز وإنشاء رقم طلب حقيقي.', 'No order was created or sent. On the full version the laptop is reserved and a real order number is created.')}</p></div></div><a class="btn btn--primary" href="#/${L}">${tr('الرئيسية', 'Home')}</a></div>`;
+    $('#main')!.innerHTML = `<div class="container container--narrow"><div class="order-hero"><span class="order-hero__icon">✓</span><div><h1>${tr('تم تجهيز طلبك على واتساب', 'Your order is ready on WhatsApp')}</h1><p>${tr('ابعت الرسالة اللي اتفتحت في واتساب، وفريق المبيعات هيأكدلك التوفر وتكلفة الشحن. الطلب مش مؤكد غير بعد رد فريق المبيعات.', 'Send the message that opened in WhatsApp; our sales team will confirm availability and shipping. The order is confirmed only after they reply.')}</p><a class="btn btn--wa" href="https://wa.me/${D.wa}" target="_blank" rel="noopener">${tr('افتح واتساب', 'Open WhatsApp')}</a> </div></div><a class="btn btn--primary" href="#/${L}">${tr('الرئيسية', 'Home')}</a></div>`;
     return;
   }
-  if (f.matches('form[action*="/contact"], form[action*="/track"]')) { toast(tr('غير متاح في النسخة الثابتة', 'Not available in the static copy')); return; }
+  if (f.matches('form[action*="/contact"], form[action*="/track"]')) { window.open(`https://wa.me/${D.wa}`, '_blank', 'noopener'); return; }
 }
 function onChange(e: Event) {
   const t = e.target as HTMLInputElement;

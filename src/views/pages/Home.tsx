@@ -65,7 +65,7 @@ export function HomePage({ v, d }: { v: View; d: HomeData }) {
       <div className="container">
         <Section title={t('shop_by_usage')} id="usage">
           <div className="usage-grid">
-            {USAGES.map((u) => (
+            {USAGES.filter((u) => (d.usageCounts[u] || 0) > 0).map((u) => (
               <a key={u} className="usage" href={href(v, `/laptops?usage=${u}`)}>
                 <span className="usage__icon"><Icon name={USAGE_ICON[u]} size={24} /></span>
                 <span className="usage__name">{t(`usage_${u}` as any)}</span>

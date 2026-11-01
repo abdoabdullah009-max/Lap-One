@@ -40,7 +40,7 @@ export function Layout({ v, meta, children, bodyClass = '' }: { v: View; meta: M
         <meta property="og:locale" content={locale === 'ar' ? 'ar_EG' : 'en_US'} />
         {meta.ogImage ? <meta property="og:image" content={meta.ogImage.startsWith('http') ? meta.ogImage : v.baseUrl + meta.ogImage} /> : null}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="theme-color" content={brand.colors.navy} />
+        <meta name="theme-color" content={brand.colors.electric} />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -61,7 +61,7 @@ export function Layout({ v, meta, children, bodyClass = '' }: { v: View; meta: M
           <div className="header__row container">
             <button type="button" className="iconbtn header__menu js-drawer-open" aria-label={t('menu')} aria-controls="drawer" aria-expanded="false"><Icon name="menu" /></button>
             <a href={href(v)} className="logo" aria-label={`${brand.name} — ${t('home')}`}>
-              {brand.logoUrl ? <img src={brand.logoUrl} alt={brand.name} height={32} /> : <><span className="logo__mark" aria-hidden="true">L1</span><span className="logo__word">LAP<b>ONE</b></span></>}
+              {brand.logoUrl ? <img src={brand.logoUrl} alt={brand.name} width={176} height={28} className="logo__img" /> : <><span className="logo__mark" aria-hidden="true">L1</span><span className="logo__word">LAP<b>ONE</b></span></>}
             </a>
             <form className="search js-search" role="search" action={href(v, '/laptops')} method="get">
               <label htmlFor="q" className="sr-only">{t('search')}</label>
@@ -100,7 +100,7 @@ export function Layout({ v, meta, children, bodyClass = '' }: { v: View; meta: M
 
         <div className="drawer" id="drawer" hidden>
           <div className="drawer__panel" role="dialog" aria-modal="true" aria-label={t('menu')}>
-            <div className="drawer__head"><span className="logo__word">LAP<b>ONE</b></span><button className="iconbtn js-drawer-close" aria-label={t('close')}><Icon name="x" /></button></div>
+            <div className="drawer__head">{brand.logoUrl ? <img src={brand.logoUrl} alt={brand.name} width={150} height={24} className="logo__img" /> : <span className="logo__word">LAP<b>ONE</b></span>}<button className="iconbtn js-drawer-close" aria-label={t('close')}><Icon name="x" /></button></div>
             <nav className="drawer__nav">
               <a href={href(v, '/laptops')}>{t('all_laptops')}</a>
               <a href={href(v, '/help-me-choose')}>{t('hero_cta2')}</a>
@@ -150,7 +150,7 @@ function Footer({ v }: { v: View }) {
     <footer className="footer">
       <div className="container footer__grid">
         <div>
-          <span className="logo__word logo__word--light">LAP<b>ONE</b></span>
+          {brand.logoUrl ? <img src={brand.logoUrl} alt={brand.name} width={176} height={28} className="logo__img" loading="lazy" /> : <span className="logo__word logo__word--light">LAP<b>ONE</b></span>}
           <p className="footer__about">{t('footer_about')}</p>
           {brand.logoIsTemporary ? <p className="footer__note">{v.locale === 'ar' ? 'شعار نصي مؤقت — ليس الشعار المعتمد.' : 'Temporary text mark — not the approved logo.'}</p> : null}
         </div>
@@ -177,7 +177,7 @@ function Footer({ v }: { v: View }) {
           <h3>{t('contact_us')}</h3>
           <ul className="footer__contact">
             <li><Icon name="phone" size={16} />{c.phone ? <a href={`tel:${c.phone}`} dir="ltr">{c.phone}</a> : <span className="muted">{t('not_set')}</span>}</li>
-            <li><Icon name="whatsapp" size={16} />{c.whatsapp ? <a href={waLink(v, '') || '#'} dir="ltr" target="_blank" rel="noopener">{c.whatsapp}</a> : <span className="muted">{t('not_set')}</span>}</li>
+            <li><Icon name="whatsapp" size={16} />{c.whatsapp ? <a href={waLink(v, '') || '#'} dir="ltr" target="_blank" rel="noopener">{c.whatsapp.replace(/^20/, '0')}</a> : <span className="muted">{t('not_set')}</span>}</li>
             <li><Icon name="mail" size={16} />{c.email ? <a href={`mailto:${c.email}`}>{c.email}</a> : <span className="muted">{t('not_set')}</span>}</li>
             <li><Icon name="pin" size={16} />{bi(v, c.address) || <span className="muted">{t('not_set')}</span>}</li>
             {bi(v, c.hours) ? <li><Icon name="clock" size={16} />{bi(v, c.hours)}</li> : null}

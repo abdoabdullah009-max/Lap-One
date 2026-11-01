@@ -50,7 +50,8 @@ route('GET', '/:l', async (ctx) => {
                                       WHERE r.approved AND r.verified ORDER BY r.created_at DESC LIMIT 6`);
   const value = by((a, b) => valueScore(b) - valueScore(a));
   sendHtml(ctx, <HomePage v={await makeView(ctx)} d={{
-    hero: value.find((i) => i.grade === 'excellent' || i.grade === 'very_good') || value[0] || null,
+    // Hero: a well-documented, well-stocked laptop (never a listing with missing core specs)
+    hero: [...inStock].filter((i) => i.ram_gb && i.storage_gb && i.cpu_model).sort((a, b) => b.available - a.available || valueScore(b) - valueScore(a))[0] || value[0] || null,
     bestSellers: by((a, b) => b.sold - a.sold).filter((i) => i.sold > 0),
     newArrivals: by((a, b) => +b.created_at - +a.created_at), bestValue: value, offers: inStock.filter((i) => i.is_offer).slice(0, 8),
     workstations: inStock.filter((i) => i.usages.includes('workstation')).slice(0, 8),

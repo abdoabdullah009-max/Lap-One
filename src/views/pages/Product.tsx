@@ -45,6 +45,8 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
   const tested = units.filter((u) => u.battery_health_pct !== null);
   const funcStatus = units.length ? units.every((u) => u.inspection?.functional_status === 'passed') ? 'passed' : units.some((u) => u.inspection?.functional_status === 'failed') ? 'failed' : units.some((u) => !u.inspection) ? 'unknown' : 'passed_with_notes' : null;
   const single = it.inventory_mode === 'unique' || units.length === 1;
+  // Has anything about condition actually been recorded? If not, show one honest line instead of empty tables.
+  const hasCond = !!it.grade || units.some((u) => u.cosmetic_notes || u.defects || u.screen_notes || u.keyboard_notes || u.inspection || u.battery_health_pct !== null);
   const u0 = units[0];
   const ldOffer = { '@type': 'Offer', price: (it.price / 100).toFixed(2), priceCurrency: 'EGP', url, itemCondition: 'https://schema.org/UsedCondition',
     availability: it.available > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', seller: { '@type': 'Organization', name: brand.name } };
@@ -102,7 +104,7 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
             <h1 className="buy__title">{it.title}</h1>
             <div className="buy__badges">
               <GradeBadge v={v} grade={it.grade} />
-              {funcStatus ? <span className={`badge badge--func badge--${funcStatus}`}><Icon name={funcStatus === 'failed' ? 'alert' : 'check'} size={14} />{t('functional')}: {t(`func_${funcStatus}` as any)}</span> : null}
+              {funcStatus && funcStatus !== 'unknown' ? <span className={`badge badge--func badge--${funcStatus}`}><Icon name={funcStatus === 'failed' ? 'alert' : 'check'} size={14} />{t('functional')}: {t(`func_${funcStatus}` as any)}</span> : null}
               {it.is_sample ? <span className="sample-tag">{t('sample_badge')}</span> : null}
             </div>
             {!it.is_accessory ? (
@@ -174,6 +176,10 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
           <>
             <section id="condition" className="panel">
               <h2>{t('condition')}</h2>
+              {!hasCond ? (
+                <p className="note note--info"><Icon name="info" size={18} />{locale === 'ar' ? 'تفاصيل الحالة الشكلية وصور الجهاز الفعلي متاحة عند الطلب — اسألنا على واتساب وهنبعتلك صور وتفاصيل الوحدة.' : 'Cosmetic condition details and photos of the actual unit are available on request — ask us on WhatsApp.'}
+                  {wa ? <> <a href={wa} className="js-wa" data-source="whatsapp_product" data-variant={it.id} target="_blank" rel="noopener">{t('ask_whatsapp')}</a></> : null}</p>
+              ) : <>
               <p className="hint"><Icon name="info" size={16} />{t('grade_vs_function')}</p>
               <div className="cond-grid">
                 <div className="cond">
@@ -210,6 +216,7 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
                   </table></div>
                 </>
               ) : null}
+              </>}
             </section>
 
             <section id="battery" className="panel">

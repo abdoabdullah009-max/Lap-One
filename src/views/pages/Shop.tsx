@@ -449,7 +449,7 @@ export function ContactPage({ v, sent }: { v: View; sent: boolean }) {
           <div className="panel">
             <ul className="footer__contact footer__contact--dark">
               <li><Icon name="phone" size={18} />{c.phone ? <a href={`tel:${c.phone}`} dir="ltr">{c.phone}</a> : <span className="muted">{t('not_set')}</span>}</li>
-              <li><Icon name="whatsapp" size={18} />{wa ? <a href={wa} className="js-wa" data-source="whatsapp_general" target="_blank" rel="noopener" dir="ltr">{c.whatsapp}</a> : <span className="muted">{t('not_set')}</span>}</li>
+              <li><Icon name="whatsapp" size={18} />{wa ? <a href={wa} className="js-wa" data-source="whatsapp_general" target="_blank" rel="noopener" dir="ltr">{c.whatsapp.replace(/^20/, '0')}</a> : <span className="muted">{t('not_set')}</span>}</li>
               <li><Icon name="mail" size={18} />{c.email ? <a href={`mailto:${c.email}`}>{c.email}</a> : <span className="muted">{t('not_set')}</span>}</li>
               <li><Icon name="pin" size={18} />{bi(v, c.address) || <span className="muted">{t('not_set')}</span>}</li>
               {bi(v, c.hours) ? <li><Icon name="clock" size={18} />{bi(v, c.hours)}</li> : null}

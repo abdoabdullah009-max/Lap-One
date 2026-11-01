@@ -1,4 +1,4 @@
-:root { --navy:#0B1F44; --blue:#1D5BFF; --g50:#F6F7F9; --g100:#EEF0F4; --g200:#E1E5EC; --g500:#646C7E; --ok:#0F7B53; --warn:#9A5B00; --bad:#C02B2B; }
+:root { --navy:#071B3A; --blue:#0060FF; --g50:#F6F7F9; --g100:#EEF0F4; --g200:#E1E5EC; --g500:#646C7E; --ok:#0F7B53; --warn:#9A5B00; --bad:#C02B2B; }
 * { box-sizing: border-box; }
 body { margin: 0; font: 14px/1.5 Inter, 'IBM Plex Sans Arabic', system-ui, sans-serif; color: #0E1420; background: var(--g50); }
 a { color: var(--blue); text-decoration: none; } a:hover { text-decoration: underline; }
