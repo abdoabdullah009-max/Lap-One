@@ -764,3 +764,4 @@ h1, h2, h3, h4 { color: var(--navy); }
   .card__acts .btn--icon, .card__acts form .btn--icon { width: 100%; min-height: 38px; }
   .promises li small { font-size: .74rem; }
 }
+@media (min-width: 641px) and (max-width: 920px) { .ucircles { gap: 18px; flex-wrap: nowrap; } .ucircle { width: 116px; } .ucircle__disc { width: 104px; height: 104px; } }
