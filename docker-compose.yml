@@ -1,0 +1,26 @@
+# Local / staging stack. For production use a managed PostgreSQL instead of the db service.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lapone
+      POSTGRES_PASSWORD: lapone_dev
+      POSTGRES_DB: lapone
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U lapone"], interval: 5s, retries: 10 }
+  app:
+    build: .
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL: postgres://lapone:lapone_dev@db:5432/lapone
+      PUBLIC_BASE_URL: http://localhost:3000
+      NODE_ENV: production
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET (openssl rand -hex 32)}
+      PAYMOB_MODE: sandbox_mock
+      PAYMOB_HMAC_SECRET: ${PAYMOB_HMAC_SECRET:?set PAYMOB_HMAC_SECRET}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    volumes: [uploads:/app/uploads]
+volumes:
+  pgdata:
+  uploads:

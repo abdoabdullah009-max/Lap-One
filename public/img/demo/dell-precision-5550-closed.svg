@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Precision 5550"><rect width="800" height="600" fill="#F4F6F9"/>
+  <ellipse cx="400" cy="470" rx="320" ry="22" fill="#000" opacity=".08"/>
+  <rect x="100" y="120" width="600" height="340" rx="22" fill="#D9DDE3"/><rect x="100" y="440" width="600" height="20" rx="8" fill="#B8BEC8"/>
+  <circle cx="400" cy="290" r="26" fill="none" stroke="#B8BEC8" stroke-width="4"/>
+  <text x="400" y="360" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="20" fill="#2A2F38" opacity=".6">Precision</text></svg>
