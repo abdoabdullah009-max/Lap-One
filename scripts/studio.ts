@@ -32,7 +32,7 @@ export function traitsFor(brand: string, family: string, screenIn: number | null
   const big = (screenIn || 14) >= 15;
   const base: Traits = { ...SILVER, keys: '#24262B', keyEdge: '#0F1013', aspect: 16 / 9, bezel: 0.06, numpad: big, touchbar: false, grille: false, bigPad: false, padStyle: 'plain', hue: ['#0B3D91', '#1F7AE0', '#7FC4FF'], thin: 12 };
   if (brand === 'apple') return { ...base, ...SPACE, keys: '#151517', keyEdge: '#050506', aspect: 16 / 10, bezel: 0.045, numpad: false, touchbar: true, grille: true, bigPad: true, padStyle: 'glass', hue: ['#2B1055', '#7B3FE4', '#F08FC0'], thin: 9 };
-  if (brand === 'microsoft') return { ...base, ...PLAT, deck: '#C9CACD', fabric: true, keys: '#3A3C41', keyEdge: '#26282C', aspect: 3 / 2, bezel: 0.05, numpad: false, padStyle: 'glass', hue: ['#0A4D8C', '#2E9BE6', '#A6E1FF'], thin: 9 };
+  if (brand === 'microsoft') return { ...base, body: '#26272B', bodyDark: '#141518', bodyLight: '#3A3C42', keys: '#121316', keyEdge: '#050506', aspect: 3 / 2, bezel: 0.05, numpad: false, padStyle: 'glass', hue: ['#0A2A4A', '#1E6FD9', '#7CC6FF'], thin: 9 };  // Matte Black (all-metal deck)
   if (f.includes('thinkpad')) return { ...base, ...BLACK, keys: '#1B1C1F', keyEdge: '#0A0A0C', legend: '#DADDE2', bezel: 0.06, numpad: false, trackpoint: '#E1251B', tpButtons: '#1E1F23', hue: ['#121418', '#3B4252', '#E1251B'], thin: 10 };
   if (f.includes('zbook')) return { ...base, ...TITAN, keys: '#1C1E22', keyEdge: '#0B0C0E', grille: false, hue: ['#05223F', '#0E5FAE', '#55B6FF'], thin: 14 };
   if (f.includes('elitebook')) return { ...base, ...SILVER, grille: true, padStyle: 'glass', hue: ['#062A55', '#1565C0', '#7EC8FF'], thin: 11 };
