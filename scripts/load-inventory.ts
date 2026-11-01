@@ -6,7 +6,8 @@
 import { db, one } from '../src/server/db';
 import { EGP } from '../src/server/money';
 import { saveSetting, DEFAULT_SETTINGS } from '../src/server/services/settings';
-import { laptopSvg, writeSvg } from './images';
+import { writeSvg } from './images';
+import { studioSvg, traitsFor } from './studio';
 import path from 'node:path';
 
 type R = { brand: string; family: string; series: string; color: string; cpu: [string | null, string | null, string | null, number | null];
@@ -51,7 +52,7 @@ async function main() {
       const descEn = [r.note ? 'Web browsing only.' : null, r.ramUpgradable === true ? 'RAM is upgradeable.' : r.ramUpgradable === false ? 'RAM is not upgradeable.' : null].filter(Boolean).join(' ') || null;
       const fam = await one<any>(q, `INSERT INTO product_families(brand_id, slug, name, series, description_ar, description_en) VALUES ($1,$2,$3,$4,$5,$6)
           ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`, [brand.id, fslug, r.family, r.series, descAr, descEn]);
-      for (const view of ['front', 'angle', 'closed'] as const) writeSvg(path.resolve('public/img/demo'), `${fslug}-${view}.svg`, laptopSvg(view, r.color, r.family, r.series));
+      for (const view of ['front', 'angle'] as const) writeSvg(path.resolve('public/img/demo'), `${fslug}-${view}.svg`, studioSvg(view, traitsFor(r.brand, r.family, r.screen), r.family));
       const cpuShort = (r.cpu[1] || '').replace(/^Core /, '');
       const st = r.storage[0] ? `${r.storage[0]}GB${r.storage[1] === 'nvme' ? ' NVMe' : ''}` : '';
       const title = `${BRAND_NAMES[r.brand].replace(' Surface', '')} ${r.family}${cpuShort ? ` — ${cpuShort}` : ''}${r.ram[0] ? ` / ${r.ram[0]}GB` : ''}${st ? ` / ${st}` : ''}`;
@@ -64,7 +65,7 @@ async function main() {
         [fam.id, slug, sku, title, r.qty > 1 ? 'batch' : 'unique', r.cpu[0], r.cpu[1], r.cpu[2], r.cpu[3], r.ram[0], r.ram[1], r.storage[0], r.storage[1],
           r.gpu[0], r.gpu[1], r.gpu[2], r.gpu[3], r.screen, r.touch ?? null, r.convertible ?? (r.family.includes('Surface Laptop') ? false : null), r.os ?? null, r.usages, EGP(r.price), 6, 'ضمان 6 شهور + استبدال أو استرجاع خلال 14 يوم من الاستلام', '6-month warranty + exchange or return within 14 days of delivery']);
       for (const u of r.usages) await q.query('INSERT INTO variant_categories VALUES ($1,$2)', [v.id, catIds[u]]);
-      for (const [i, view] of ['front', 'angle', 'closed'].entries())
+      for (const [i, view] of ['front', 'angle'].entries())
         await q.query(`INSERT INTO product_images(variant_id,url,alt,kind,width,height,sort) VALUES ($1,$2,$3,'representative',800,600,$4)`, [v.id, `/img/demo/${fslug}-${view}.svg`, title, i]);
       await q.query('INSERT INTO price_history(variant_id, old_price, new_price) VALUES ($1, NULL, $2)', [v.id, EGP(r.price)]);
       for (let i = 0; i < r.qty; i++) {
