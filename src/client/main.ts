@@ -340,3 +340,28 @@ if (orderHero) {
     setTimeout(poll, 3000);
   }
 }
+
+// ---------------------------------------------------------------- rails (arrow buttons) + scroll reveal
+function setupRails(root: ParentNode = document) {
+  $$<HTMLButtonElement>('.js-rail', root).forEach((btn) => {
+    const rail = document.getElementById(btn.dataset.target || ''); if (!rail) return;
+    const rtl = getComputedStyle(rail).direction === 'rtl';
+    const sync = () => {
+      const max = rail.scrollWidth - rail.clientWidth; const pos = Math.abs(rail.scrollLeft);
+      $$<HTMLButtonElement>(`.js-rail[data-target="${rail.id}"]`).forEach((b) => { b.disabled = b.dataset.dir === '-1' ? pos < 4 : pos > max - 4; });
+    };
+    btn.addEventListener('click', () => {
+      const card = rail.firstElementChild as HTMLElement | null; const step = (card?.offsetWidth || 260) + 14;
+      rail.scrollBy({ left: Number(btn.dataset.dir) * step * (rtl ? -1 : 1) * 2, behavior: 'smooth' });
+    });
+    rail.addEventListener('scroll', sync, { passive: true }); sync();
+  });
+}
+function setupReveal(root: ParentNode = document) {
+  const els = $$('.reveal', root); if (!els.length) return;
+  if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('is-in')); return; }
+  const io = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  els.forEach((e) => io.observe(e));
+}
+document.documentElement.classList.add('js-ready');
+setupRails(); setupReveal();

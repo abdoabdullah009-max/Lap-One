@@ -113,8 +113,8 @@ export function ProductCard({ v, it, list }: { v: View; it: CatalogItem; list?: 
         {!it.is_accessory ? (
           <ul className="card__specs">
             <li title={v.t('s_cpu')}><Icon name="cpu" size={14} />{cpuShort(it)}{it.cpu_gen ? <small> · {genText(v, it.cpu_gen)}</small> : null}</li>
-            <li>{it.ram_gb}GB RAM · {storageText(v, it.storage_gb, it.storage_type)}</li>
-            <li>{it.gpu_model}{it.gpu_dedicated && it.vram_gb ? ` ${it.vram_gb}GB` : ''} · {it.screen_in}"</li>
+            {it.ram_gb || it.storage_gb ? <li><bdi dir="ltr">{[it.ram_gb ? `${it.ram_gb}GB RAM` : null, it.storage_gb ? storageText(v, it.storage_gb, it.storage_type) : null].filter(Boolean).join(' · ')}</bdi></li> : null}
+            {it.gpu_model || it.screen_in ? <li><bdi dir="ltr">{[it.gpu_model ? `${it.gpu_model}${it.gpu_dedicated && it.vram_gb ? ` ${it.vram_gb}GB` : ''}` : null, it.screen_in ? `${it.screen_in}"` : null].filter(Boolean).join(' · ')}</bdi></li> : null}
           </ul>
         ) : null}
         <div className="card__foot">

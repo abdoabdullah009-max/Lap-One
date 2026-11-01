@@ -135,6 +135,13 @@ export function Layout({ v, meta, children, bodyClass = '' }: { v: View; meta: M
             <div><button className="btn btn--primary btn--sm js-consent" data-v="yes">{t('accept')}</button><button className="btn btn--ghost btn--sm js-consent" data-v="no">{t('decline')}</button></div>
           </div>
         ) : null}
+        <nav className="bnav" aria-label={locale === 'ar' ? 'التنقل السريع' : 'Quick navigation'}>
+          <a href={href(v)} className={pathNoLocale === '' ? 'is-on' : ''}><Icon name="grid" size={22} /><span>{t('home')}</span></a>
+          <a href={href(v, '/laptops')} className={pathNoLocale.startsWith('/laptops') ? 'is-on' : ''}><Icon name="search" size={22} /><span>{locale === 'ar' ? 'الأجهزة' : 'Laptops'}</span></a>
+          <a href={href(v, '/cart')} className={pathNoLocale === '/cart' ? 'is-on' : ''}><span className="bnav__ic"><Icon name="cart" size={22} /><span className="count js-cart-count" hidden={!v.cartCount}>{v.cartCount}</span></span><span>{t('cart')}</span></a>
+          {wa ? <a href={wa} className="bnav__wa js-wa" data-source="whatsapp_general" target="_blank" rel="noopener"><Icon name="whatsapp" size={22} /><span>{t('whatsapp')}</span></a>
+            : <a href={href(v, '/contact')}><Icon name="phone" size={22} /><span>{t('contact')}</span></a>}
+        </nav>
         {wa ? <a href={wa} className="wa-fab js-wa" data-source="whatsapp_general" target="_blank" rel="noopener" aria-label={t('whatsapp')}><Icon name="whatsapp" size={28} /></a> : null}
         <script src={`/assets/app.js?v=${v.v}`} defer nonce={v.nonce} />
       </body>

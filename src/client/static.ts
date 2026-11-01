@@ -53,6 +53,7 @@ function route() {
   else if (rest.startsWith('/lp/') || rest.startsWith('/brand/')) html = catalog(new URLSearchParams(rest.startsWith('/brand/') ? `brand=${rest.slice(7)}` : ({ students: 'usage=study', gaming: 'usage=gaming', workstations: 'usage=workstation', offers: 'offer=1', budget: 'usage=budget' } as any)[rest.slice(4)] || ''));
   if (!html) html = `<div class="container empty empty--page"><span class="big404">404</span><h1>${tr('الصفحة غير موجودة', 'Page not found')}</h1><a class="btn btn--primary" href="#/${L}">${tr('ارجع للرئيسية', 'Back to home')}</a></div>`;
   main.innerHTML = hyd(html);
+  $$<HTMLAnchorElement>('.bnav a').forEach((x) => { const h = (x.getAttribute('href') || '').replace(/^#\/(ar|en)/, ''); x.classList.toggle('is-on', h === rest || (h === '/laptops' && rest.startsWith('/laptops'))); });
   const lang = $<HTMLAnchorElement>('.nav__lang'); if (lang) lang.href = `#/${L === 'ar' ? 'en' : 'ar'}${rest}${qs ? '?' + qs : ''}`;
   $$<HTMLAnchorElement>('.drawer__nav a[lang]').forEach((a) => (a.href = lang!.href));
   const q = $<HTMLInputElement>('#q'); if (q) q.value = rest === '/laptops' ? sp.get('q') || '' : '';
@@ -189,6 +190,16 @@ function wizardResults(sp: URLSearchParams) {
 
 // ---------------------------------------------------------------- behaviours
 function enhance(root: HTMLElement) {
+  // rails + reveal
+  $$<HTMLButtonElement>('.js-rail', root).forEach((btn) => {
+    const rail = document.getElementById(btn.dataset.target || ''); if (!rail) return;
+    const sync = () => { const max = rail.scrollWidth - rail.clientWidth; const pos = Math.abs(rail.scrollLeft); $$<HTMLButtonElement>(`.js-rail[data-target="${rail.id}"]`).forEach((b) => { b.disabled = b.dataset.dir === '-1' ? pos < 4 : pos > max - 4; }); };
+    btn.addEventListener('click', () => { const card = rail.firstElementChild as HTMLElement | null; const step = ((card?.offsetWidth || 260) + 14) * 2; rail.scrollBy({ left: Number(btn.dataset.dir) * step * (L === 'ar' ? -1 : 1), behavior: 'smooth' }); });
+    rail.addEventListener('scroll', sync, { passive: true }); sync();
+  });
+  const rev = $$('.reveal', root);
+  if ('IntersectionObserver' in window) { const io = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px' }); rev.forEach((e) => io.observe(e)); }
+  else rev.forEach((e) => e.classList.add('is-in'));
   // gallery
   const g = $('.js-gallery', root);
   if (g) {
@@ -301,6 +312,7 @@ function onClick(e: Event) {
   else if (el.matches('.js-buybar-buy')) ($('button[formaction]') as HTMLButtonElement | null)?.click();
 }
 
+document.documentElement.classList.add('js-ready');
 document.addEventListener('click', onClick); document.addEventListener('submit', onSubmit); document.addEventListener('change', onChange);
 window.addEventListener('hashchange', route);
 route();

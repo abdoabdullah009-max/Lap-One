@@ -1,138 +1,141 @@
-import { USAGES } from '../../config/catalog';
 import { brand } from '../../config/brand';
 import type { CatalogItem } from '../../server/services/catalog';
 import { Layout } from '../Layout';
-import { View, Icon, href, bi, money, Section, Rail, USAGE_ICON, GradeBadge, cpuShort, storageText } from '../ui';
+import { View, Icon, href, bi, money, ProductCard, GradeBadge, cpuShort, storageText } from '../ui';
 
+export interface HomeSection { key: string; title: [string, string]; tagline: string; href: string; items: CatalogItem[]; count: number }
 export interface HomeData {
-  hero: CatalogItem | null; bestSellers: CatalogItem[]; newArrivals: CatalogItem[]; bestValue: CatalogItem[]; offers: CatalogItem[];
-  workstations: CatalogItem[]; students: CatalogItem[]; accessories: CatalogItem[]; brands: { slug: string; name: string; count: number }[];
-  usageCounts: Record<string, number>; reviews: { display_name: string; rating: number; body: string | null; title: string }[];
+  hero: CatalogItem | null; featured: CatalogItem[]; sections: HomeSection[];
+  brands: { slug: string; name: string; count: number }[];
+  reviews: { display_name: string; rating: number; body: string | null; title: string }[];
+}
+
+/** Spotlight tile: brand, bold model name, key specs, price — with a laptop image on a soft blue wave. */
+function FeatureTile({ v, it, i }: { v: View; it: CatalogItem; i: number }) {
+  const gpu = it.gpu_dedicated ? `${it.gpu_model}${it.vram_gb ? ` ${it.vram_gb}GB` : ''}` : null;
+  return (
+    <a className="ftile reveal" style={{ ['--d' as any]: `${i * 60}ms` }} href={href(v, `/p/${it.slug}`)}>
+      <span className="ftile__text">
+        <span className="ftile__brand">{it.brand_name.replace(' Surface', '')}</span>
+        <b className="ftile__model">{it.family_name}</b>
+        <span className="ftile__spec"><Icon name="cpu" size={14} />{cpuShort(it)}</span>
+        {it.ram_gb ? <span className="ftile__spec">{it.ram_gb}GB · {storageText(v, it.storage_gb, it.storage_type)}</span> : null}
+        {gpu ? <span className="ftile__spec ftile__spec--gpu">{gpu}</span> : null}
+        <span className="ftile__price">{money(v, it.price)}</span>
+      </span>
+      <img className="ftile__img" src={it.image || ''} alt={it.title} width={800} height={600} loading={i < 3 ? 'eager' : 'lazy'} />
+      <span className="ftile__go" aria-hidden="true"><Icon name="arrow" size={18} className="flip-rtl" /></span>
+    </a>
+  );
+}
+
+/** Category band: overlapping product images, two-tone title, tagline, then a scrollable rail with arrows. */
+function CategorySection({ v, s, idx }: { v: View; s: HomeSection; idx: number }) {
+  const pics = s.items.slice(0, 3);
+  const railId = `rail-${s.key}`;
+  return (
+    <section className="catsec reveal" aria-labelledby={`h-${s.key}`} id={s.key}>
+      <a className={`catband${idx % 2 ? ' catband--alt' : ''}`} href={s.href}>
+        <span className="catband__pics" aria-hidden="true">{pics.map((p, k) => <img key={p.id} src={p.image || ''} alt="" width={400} height={300} loading="lazy" className={`catband__pic catband__pic--${k}`} />)}</span>
+        <span className="catband__text">
+          <h2 id={`h-${s.key}`} className="catband__title"><span>{s.title[0]}</span> {s.title[1]}</h2>
+          <span className="catband__tag">{s.tagline}</span>
+        </span>
+        <span className="catband__cta">{v.t('view_all')} ({s.count}) <Icon name="arrow" size={16} className="flip-rtl" /></span>
+      </a>
+      <div className="railwrap">
+        <button type="button" className="railnav railnav--prev js-rail" data-target={railId} data-dir="-1" aria-label={v.locale === 'ar' ? 'السابق' : 'Previous'}><Icon name="chevron" size={20} className="flip-rtl rot180" /></button>
+        <div className="rail rail--snap" id={railId} role="list">{s.items.map((it) => <div role="listitem" key={it.id}><ProductCard v={v} it={it} list={s.key} /></div>)}</div>
+        <button type="button" className="railnav railnav--next js-rail" data-target={railId} data-dir="1" aria-label={v.locale === 'ar' ? 'التالي' : 'Next'}><Icon name="chevron" size={20} className="flip-rtl" /></button>
+      </div>
+    </section>
+  );
 }
 
 export function HomePage({ v, d }: { v: View; d: HomeData }) {
   const { t, settings: s, locale } = v;
-  const trust = Object.entries(s.trust).filter(([, x]) => x.enabled && bi(v, x.body));
-  const trustIcons: Record<string, string> = { inspection: 'check', grading: 'star', warranty: 'shield', support: 'phone', shipping_returns: 'truck' };
-  const budgetLabel = (r: { min: number | null; max: number | null }) => {
-    const f = (n: number) => money(v, n);
-    if (r.min === null && r.max !== null) return t('budget_under', { max: f(r.max) });
-    if (r.max === null && r.min !== null) return t('budget_over', { min: f(r.min) });
-    return t('budget_between', { min: f(r.min!), max: f(r.max!) });
-  };
-  const budgetHref = (r: { min: number | null; max: number | null }) => {
-    const q = new URLSearchParams(); if (r.min !== null) q.set('min', String(r.min / 100)); if (r.max !== null) q.set('max', String(r.max / 100));
-    return href(v, `/laptops?${q}`);
-  };
+  const ar = locale === 'ar';
+  const promises = [
+    { icon: 'shield', t: ar ? 'ضمان 6 شهور' : '6-month warranty', s: ar ? 'على كل الأجهزة' : 'On every laptop', on: s.trust.warranty.enabled },
+    { icon: 'truck', t: ar ? 'استبدال أو استرجاع' : 'Exchange or return', s: ar ? 'خلال 14 يوم من الاستلام' : 'Within 14 days of delivery', on: s.trust.shipping_returns.enabled },
+    { icon: 'star', t: ar ? 'حالة ممتازة' : 'Excellent condition', s: ar ? 'كل الأجهزة المعروضة' : 'Every listed laptop', on: s.trust.grading.enabled },
+    { icon: 'whatsapp', t: ar ? 'رد سريع على واتساب' : 'Fast WhatsApp replies', s: s.contact.whatsapp ? s.contact.whatsapp.replace(/^20/, '0') : '', on: !!s.contact.whatsapp },
+  ].filter((p) => p.on);
   const h = d.hero;
   return (
-    <Layout v={v} meta={{
-      title: locale === 'ar' ? `${brand.name} | لابتوبات استيراد مفحوصة بمواصفات وحالة واضحة` : `${brand.name} | Inspected imported laptops with clear specs and condition`,
+    <Layout v={v} bodyClass="has-bnav" meta={{
+      title: ar ? `${brand.name} | لابتوبات استيراد بمواصفات واضحة وضمان 6 شهور` : `${brand.name} | Imported laptops with clear specs and a 6-month warranty`,
       description: t('hero_sub'), ogImage: h?.image || undefined,
-      jsonLd: [{ '@context': 'https://schema.org', '@type': 'Organization', name: brand.name, url: v.baseUrl, ...(s.contact.phone ? { telephone: s.contact.phone } : {}) },
+      jsonLd: [{ '@context': 'https://schema.org', '@type': 'Organization', name: brand.name, url: v.baseUrl, logo: `${v.baseUrl}${brand.logoUrl || ''}`, ...(s.contact.whatsapp ? { telephone: `+${s.contact.whatsapp}` } : {}) },
         { '@context': 'https://schema.org', '@type': 'WebSite', url: v.baseUrl, potentialAction: { '@type': 'SearchAction', target: `${v.baseUrl}/${locale}/laptops?q={q}`, 'query-input': 'required name=q' } }],
     }}>
-      <section className="hero">
-        <div className="container hero__in">
-          <div className="hero__copy">
+      <section className="hero2">
+        <div className="container hero2__in">
+          <div className="hero2__copy">
             <h1>{t('hero_title')}</h1>
             <p className="hero__sub">{t('hero_sub')}</p>
             <div className="hero__ctas">
               <a className="btn btn--primary btn--lg" href={href(v, '/laptops')}>{t('hero_cta')}</a>
               <a className="btn btn--outline btn--lg" href={href(v, '/help-me-choose')}><Icon name="sparkle" size={18} />{t('hero_cta2')}</a>
             </div>
-            <ul className="hero__points">
-              <li><Icon name="check" size={16} />{t('hero_point1')}</li>
-              <li><Icon name="check" size={16} />{t('hero_point2')}</li>
-              <li><Icon name="check" size={16} />{t('hero_point3')}</li>
-            </ul>
           </div>
           {h ? (
-            <a className="hero__product" href={href(v, `/p/${h.slug}`)}>
+            <a className="hero2__spot" href={href(v, `/p/${h.slug}`)}>
               <img src={h.image || ''} alt={h.title} width={800} height={600} fetchPriority="high" />
-              <div className="hero__chip hero__chip--a"><Icon name="cpu" size={16} />{cpuShort(h)}</div>
-              <div className="hero__chip hero__chip--b">{h.ram_gb}GB · {storageText(v, h.storage_gb, h.storage_type)}</div>
-              <div className="hero__tag">
-                <span className="hero__tag-name">{h.brand_name} {h.family_name}</span>
-                <span className="hero__tag-row"><GradeBadge v={v} grade={h.grade} /><b>{money(v, h.price)}</b></span>
-              </div>
-              {h.image_kind === 'representative' ? <span className="hero__imgnote">{locale === 'ar' ? 'صورة توضيحية' : 'Representative image'}</span> : null}
+              <span className="hero2__badge"><GradeBadge v={v} grade={h.grade} /><b>{money(v, h.price)}</b></span>
+              <span className="hero2__name">{h.brand_name.replace(' Surface', '')} {h.family_name}</span>
             </a>
           ) : null}
         </div>
+        {promises.length ? (
+          <div className="container"><ul className="promises">{promises.map((p) => <li key={p.icon}><span className="promises__icon"><Icon name={p.icon} size={20} /></span><span><b>{p.t}</b><small dir="auto">{p.s}</small></span></li>)}</ul></div>
+        ) : null}
       </section>
 
       <div className="container">
-        <Section title={t('shop_by_usage')} id="usage">
-          <div className="usage-grid">
-            {USAGES.filter((u) => (d.usageCounts[u] || 0) > 0).map((u) => (
-              <a key={u} className="usage" href={href(v, `/laptops?usage=${u}`)}>
-                <span className="usage__icon"><Icon name={USAGE_ICON[u]} size={24} /></span>
-                <span className="usage__name">{t(`usage_${u}` as any)}</span>
-                <span className="usage__desc">{t(`usage_${u}_d` as any)}</span>
-                <span className="usage__count">{v.t('results', { n: d.usageCounts[u] || 0 })}</span>
+        {d.featured.length ? (
+          <section className="section" aria-labelledby="featured-h">
+            <div className="section__head"><h2 id="featured-h">{ar ? 'موديلات مميزة' : 'Featured models'}</h2><a className="link-arrow" href={href(v, '/laptops')}>{t('view_all')}<Icon name="arrow" size={16} className="flip-rtl" /></a></div>
+            <div className="ftiles">{d.featured.map((it, i) => <FeatureTile key={it.id} v={v} it={it} i={i} />)}</div>
+          </section>
+        ) : null}
+
+        <section className="section" aria-labelledby="cats-h">
+          <div className="section__head"><h2 id="cats-h">{t('categories')}</h2></div>
+          <div className="cattiles">
+            {d.sections.map((sec, i) => (
+              <a key={sec.key} className="cattile reveal" style={{ ['--d' as any]: `${i * 50}ms` }} href={sec.href}>
+                <img src={sec.items[0]?.image || ''} alt="" width={400} height={300} loading="lazy" />
+                <span className="cattile__title"><span>{sec.title[0]}</span> {sec.title[1]}</span>
+                <small>{t('results', { n: sec.count })}</small>
               </a>
             ))}
           </div>
-        </Section>
+        </section>
 
-        {s.budget_ranges.length ? (
-          <Section title={t('shop_by_budget')} id="budget">
-            <div className="chips chips--lg">{s.budget_ranges.map((r, i) => <a key={i} className="chip" href={budgetHref(r)}>{budgetLabel(r)}</a>)}</div>
-          </Section>
+        {d.sections.map((sec, i) => <CategorySection key={sec.key} v={v} s={sec} idx={i} />)}
+
+        <section className="section js-recent" hidden aria-labelledby="recent"><div className="section__head"><h2 id="recent">{t('recently_viewed')}</h2></div><div className="rail js-recent-rail" /></section>
+
+        {d.brands.length > 1 ? (
+          <section className="section" aria-labelledby="brands-h">
+            <div className="section__head"><h2 id="brands-h">{t('shop_by_brand')}</h2></div>
+            <div className="brands">{d.brands.map((b) => <a key={b.slug} href={href(v, `/laptops?brand=${b.slug}`)} className="brandtile"><b>{b.name}</b><small>{t('results', { n: b.count })}</small></a>)}</div>
+          </section>
         ) : null}
 
-        {d.offers.length ? <Section title={t('special_offers')} link={href(v, '/laptops?offer=1')} linkLabel={t('view_all')} id="offers"><Rail v={v} items={d.offers} list="offers" /></Section> : null}
-        {d.bestSellers.length ? <Section title={t('best_sellers')} link={href(v, '/laptops?sort=best_selling')} linkLabel={t('view_all')} id="best"><Rail v={v} items={d.bestSellers} list="best_sellers" /></Section> : null}
-        <Section title={t('new_arrivals')} link={href(v, '/laptops?sort=newest')} linkLabel={t('view_all')} id="new"><Rail v={v} items={d.newArrivals} list="new_arrivals" /></Section>
-        <Section title={t('best_value')} link={href(v, '/laptops')} linkLabel={t('view_all')} id="value"><Rail v={v} items={d.bestValue} list="best_value" /></Section>
-
-        <Section title={t('shop_by_brand')} id="brands">
-          <div className="brands">{d.brands.map((b) => <a key={b.slug} href={href(v, `/laptops?brand=${b.slug}`)} className="brandtile"><b>{b.name}</b><small>{t('results', { n: b.count })}</small></a>)}</div>
-        </Section>
-
-        {d.workstations.length ? <Section title={t('workstations')} link={href(v, '/laptops?usage=workstation')} linkLabel={t('view_all')} id="ws"><Rail v={v} items={d.workstations} list="workstations" /></Section> : null}
-        {d.students.length ? <Section title={t('for_students')} link={href(v, '/laptops?usage=study&sort=price_asc')} linkLabel={t('view_all')} id="students"><Rail v={v} items={d.students} list="students" /></Section> : null}
-        <section className="section js-recent" hidden aria-labelledby="recent"><div className="section__head"><h2 id="recent">{t('recently_viewed')}</h2></div><div className="rail js-recent-rail" /></section>
-        {d.accessories.length ? <Section title={t('accessories')} link={href(v, '/laptops?accessory=1')} linkLabel={t('view_all')} id="acc"><Rail v={v} items={d.accessories} list="accessories" /></Section> : null}
-      </div>
-
-      {trust.length ? (
-        <section className="trust" aria-labelledby="trust-h">
-          <div className="container">
-            <h2 id="trust-h">{t('why_us')}</h2>
-            <div className="trust__grid">
-              {trust.map(([k, x]) => (
-                <div key={k} className="trust__item">
-                  <span className="trust__icon"><Icon name={trustIcons[k]} size={22} /></span>
-                  <h3>{bi(v, x.title)}</h3><p>{bi(v, x.body)}</p>
-                  {k === 'inspection' ? <a href={href(v, '/pages/inspection')} className="link-arrow">{POL[locale].more}<Icon name="arrow" size={14} className="flip-rtl" /></a> : null}
-                  {k === 'warranty' ? <a href={href(v, '/pages/warranty')} className="link-arrow">{POL[locale].more}<Icon name="arrow" size={14} className="flip-rtl" /></a> : null}
-                  {k === 'shipping_returns' ? <a href={href(v, '/pages/returns')} className="link-arrow">{POL[locale].more}<Icon name="arrow" size={14} className="flip-rtl" /></a> : null}
-                </div>
-              ))}
-            </div>
-            <div className="grades">
-              {(['excellent', 'very_good', 'good', 'fair'] as const).map((g) => <div key={g} className="grades__item"><GradeBadge v={v} grade={g} /><p>{bi(v, s.grade_definitions[g])}</p></div>)}
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      <div className="container">
-        <Section title={t('reviews_title')} id="reviews">
-          {d.reviews.length ? (
+        {d.reviews.length ? (
+          <section className="section" aria-labelledby="rev-h"><div className="section__head"><h2 id="rev-h">{t('reviews_title')}</h2></div>
             <div className="reviews">{d.reviews.map((r, i) => <figure key={i} className="review"><div className="stars" aria-label={`${r.rating}/5`}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div><blockquote>{r.body}</blockquote><figcaption>{r.display_name} · {r.title}</figcaption></figure>)}</div>
-          ) : <p className="empty-note"><Icon name="info" size={18} />{t('no_reviews')}</p>}
-        </Section>
+          </section>
+        ) : null}
 
         {s.faq.length ? (
-          <Section title={t('faq')} id="faq">
+          <section className="section" aria-labelledby="faq-h"><div className="section__head"><h2 id="faq-h">{t('faq')}</h2></div>
             <div className="faq">{s.faq.map((f, i) => <details key={i}><summary>{bi(v, f.q)}<Icon name="chevronDown" size={18} /></summary><p>{bi(v, f.a)}</p></details>)}</div>
-          </Section>
+          </section>
         ) : null}
       </div>
     </Layout>
   );
 }
-const POL = { ar: { more: 'اعرف أكتر' }, en: { more: 'Learn more' } };

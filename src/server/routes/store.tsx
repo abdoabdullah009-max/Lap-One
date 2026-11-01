@@ -38,26 +38,32 @@ const route = (method: string, pattern: string, h: Handler) => {
 
 // ---------------------------------------------------------------- pages
 route('GET', '/:l', async (ctx) => {
-  const all = (await loadCatalog());
+  const all = await loadCatalog();
   const laptops = all.filter((i) => !i.is_accessory);
   const inStock = laptops.filter((i) => i.available > 0);
-  const by = (f: (a: CatalogItem, b: CatalogItem) => number, src = inStock) => [...src].sort(f).slice(0, 8);
+  const ar = ctx.locale === 'ar';
+  const order = (a: CatalogItem, b: CatalogItem) => Number(b.available > 0) - Number(a.available > 0) || valueScore(b) - valueScore(a);
   const brands = new Map<string, { slug: string; name: string; count: number }>();
   for (const i of laptops) { const b = brands.get(i.brand_slug) || { slug: i.brand_slug, name: i.brand_name, count: 0 }; b.count++; brands.set(i.brand_slug, b); }
-  const usageCounts: Record<string, number> = {};
-  for (const u of USAGES) usageCounts[u] = laptops.filter((i) => i.usages.includes(u)).length;
+  // Featured: fully-specified, in stock, one per model family, premium first
+  const hero = [...inStock].filter((i) => i.ram_gb && i.storage_gb && i.cpu_model).sort((a, b) => b.available - a.available || valueScore(b) - valueScore(a))[0] || null;
+  const seen = new Set<number>(hero ? [hero.family_id] : []);
+  const featured = [...inStock].filter((i) => i.ram_gb && i.storage_gb && i.cpu_model).sort((a, b) => b.price - a.price)
+    .filter((i) => (seen.has(i.family_id) ? false : (seen.add(i.family_id), true))).slice(0, 6);
+  const defs: { key: string; title: [string, string]; tagline: string; match: (i: CatalogItem) => boolean; q: string }[] = [
+    { key: 'workstation', title: ar ? ['محطات', 'العمل'] : ['Workstation', 'laptops'], tagline: ar ? 'قوة تشتغل عليها بثقة — هندسة، تصميم، ومونتاج' : 'Power you can rely on — engineering, design and editing', match: (i) => i.usages.includes('workstation'), q: 'usage=workstation' },
+    { key: 'business', title: ar ? ['أجهزة', 'البيزنس'] : ['Business', 'laptops'], tagline: ar ? 'أداء ثابت واعتمادية لشغل كل يوم' : 'Steady performance for everyday work', match: (i) => i.usages.includes('office'), q: 'usage=office' },
+    { key: 'touch', title: ar ? ['تاتش و', '2 في 1'] : ['Touch &', '2-in-1'], tagline: ar ? 'خفة ومرونة في إيدك' : 'Light and flexible', match: (i) => !!i.touch || !!i.convertible, q: 'touch=1' },
+    { key: 'study', title: ar ? ['أجهزة', 'الدراسة'] : ['Laptops for', 'study'], tagline: ar ? 'رفيقك في المحاضرات والمذاكرة والمشاريع' : 'For lectures, studying and projects', match: (i) => i.usages.includes('study'), q: 'usage=study' },
+    { key: 'budget', title: ar ? ['أجهزة', 'اقتصادية'] : ['Budget', 'picks'], tagline: ar ? 'أفضل قيمة بأقل تكلفة' : 'Best value for less', match: (i) => i.usages.includes('budget'), q: 'usage=budget' },
+  ];
+  const sections = defs.map((d) => { const items = laptops.filter(d.match).sort(order); return { key: d.key, title: d.title, tagline: d.tagline, href: `/${ctx.locale}/laptops?${d.q}`, items: items.slice(0, 10), count: items.length }; })
+    .filter((s) => s.count > 0);
   const reviews = await many<any>(db, `SELECT r.display_name, r.rating, r.body, v.title FROM reviews r JOIN product_variants v ON v.id = r.variant_id
                                       WHERE r.approved AND r.verified ORDER BY r.created_at DESC LIMIT 6`);
-  const value = by((a, b) => valueScore(b) - valueScore(a));
   sendHtml(ctx, <HomePage v={await makeView(ctx)} d={{
-    // Hero: a well-documented, well-stocked laptop (never a listing with missing core specs)
-    hero: [...inStock].filter((i) => i.ram_gb && i.storage_gb && i.cpu_model).sort((a, b) => b.available - a.available || valueScore(b) - valueScore(a))[0] || value[0] || null,
-    bestSellers: by((a, b) => b.sold - a.sold).filter((i) => i.sold > 0),
-    newArrivals: by((a, b) => +b.created_at - +a.created_at), bestValue: value, offers: inStock.filter((i) => i.is_offer).slice(0, 8),
-    workstations: inStock.filter((i) => i.usages.includes('workstation')).slice(0, 8),
-    students: by((a, b) => a.price - b.price, inStock.filter((i) => i.usages.includes('study'))),
-    accessories: all.filter((i) => i.is_accessory && i.available > 0).slice(0, 8),
-    brands: [...brands.values()].sort((a, b) => b.count - a.count), usageCounts, reviews,
+    hero, featured,
+    sections, brands: [...brands.values()].sort((a, b) => b.count - a.count), reviews,
   }} />);
 });
 
