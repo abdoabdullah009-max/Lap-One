@@ -112,7 +112,7 @@ export function ProductPage({ v, d }: { v: View; d: ProductData }) {
                 <li><Icon name="cpu" size={18} /><span><small>{t('s_cpu')}</small>{cpuShort(it)}{it.cpu_gen ? ` · ${t('gen_n', { n: it.cpu_gen })}` : ''}</span></li>
                 <li><Icon name="server" size={18} /><span><small>{t('s_ram')} / {t('s_storage')}</small>{it.ram_gb}GB {it.ram_type || ''} · {storageText(v, it.storage_gb, it.storage_type)}</span></li>
                 <li><Icon name="monitor" size={18} /><span><small>{t('s_gpu')}</small>{it.gpu_model}{it.gpu_dedicated && it.vram_gb ? ` ${it.vram_gb}GB` : ''}</span></li>
-                <li><Icon name="expand" size={18} /><span><small>{t('s_screen')}</small>{it.screen_in}" {it.resolution ? `· ${it.resolution.replace('x', '×')}` : ''}{it.refresh_hz && it.refresh_hz > 60 ? ` · ${it.refresh_hz}Hz` : ''}{it.touch ? ` · ${t('f_touch')}` : ''}</span></li>
+                <li><Icon name="expand" size={18} /><span><small>{t('s_screen')}</small>{it.screen_in ? `${it.screen_in}"` : t('unknown')} {it.resolution ? `· ${it.resolution.replace('x', '×')}` : ''}{it.refresh_hz && it.refresh_hz > 60 ? ` · ${it.refresh_hz}Hz` : ''}{it.touch ? ` · ${t('f_touch')}` : ''}</span></li>
               </ul>
             ) : null}
 
