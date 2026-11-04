@@ -16,6 +16,10 @@ const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document
 const state = { cart: [] as { id: number; qty: number; opts: { label: string; price: number }[] }[], cmp: [] as number[], wish: [] as number[] };
 const byId = new Map(D.items.map((i) => [i.id, i]));
 const bySlug = new Map(D.items.map((i) => [i.slug, i]));
+// السلة وبيانات العميل بتتحفظ في المتصفح عشان ما تضيعش لو عمل refresh أو رجع بعدين
+const store = { get(k: string) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } }, set(k: string, v: unknown) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } } };
+state.cart = ((store.get('lo_cart') || []) as typeof state.cart).filter((l) => l && byId.get(l.id)?.available > 0)
+  .map((l) => ({ id: l.id, qty: Math.max(1, Math.min(Number(l.qty) || 1, byId.get(l.id).available)), opts: Array.isArray(l.opts) ? l.opts : [] }));
 let L: 'ar' | 'en' = 'ar';
 const tr = (ar: string, en: string) => (L === 'ar' ? ar : en);
 const money = (p: number) => { const n = new Intl.NumberFormat(L === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', { maximumFractionDigits: 0 }).format(p / 100); return L === 'ar' ? `${n} ج.م` : `EGP ${n}`; };
@@ -26,6 +30,7 @@ function toast(msg: string) {
 }
 function counts() {
   const set = (sel: string, n: number) => $$(sel).forEach((e) => { e.textContent = String(n); e.hidden = !n; });
+  store.set('lo_cart', state.cart);
   set('.js-cart-count', state.cart.reduce((s, l) => s + l.qty, 0)); set('.js-wish-count', state.wish.length); set('.js-cmp-count', state.cmp.length);
   const bar = $('.cmpbar'); if (bar) { bar.hidden = !state.cmp.length; const tx = $('.js-cmpbar-text', bar); if (tx) tx.textContent = tr(`المقارنة (${state.cmp.length}/4)`, `Compare (${state.cmp.length}/4)`); }
   $$('.js-wish').forEach((b) => b.classList.toggle('is-on', state.wish.includes(Number(b.dataset.id))));
@@ -140,20 +145,46 @@ function cartPage() {
 function checkoutPage() {
   if (!state.cart.length) return cartPage();
   const merch = state.cart.reduce((s, l) => s + lineTotal(l), 0);
-  return `<div class="container"><h1>${tr('إتمام الطلب', 'Checkout')}</h1><p class="note note--info">${tr('بعد ما تضغط تأكيد، هيتفتح واتساب برسالة فيها طلبك. فريق المبيعات هيأكدلك التوفر وتكلفة الشحن قبل أي دفع.', 'After you confirm, WhatsApp opens with your order. Our sales team confirms availability and shipping cost before any payment.')}</p>
+  const c = (store.get('lo_customer') || {}) as Record<string, string>;
+  const v = (k: string) => esc(c[k] || '');
+  const fld = (id: string, label: string, input: string, hint = '') => `<div class="field" data-f="${id}"><label for="${id}">${label}</label>${input}${hint ? `<small class="muted">${hint}</small>` : ''}<span class="ferr" id="${id}-err" aria-live="polite"></span></div>`;
+  return `<div class="container"><h1>${tr('إتمام الطلب', 'Checkout')}</h1>
   <form class="checkout js-demo-checkout" novalidate data-merch="${merch}"><div class="checkout__main">
-    <section class="cstep"><h2><span class="cstep__n">1</span>${tr('بيانات التواصل', 'Contact details')}</h2><div class="fields">
-      <div class="field"><label for="name">${tr('الاسم بالكامل', 'Full name')}</label><input id="name" required minlength="3"></div>
-      <div class="field"><label for="phone">${tr('رقم الموبايل', 'Mobile number')}</label><input id="phone" type="tel" dir="ltr" placeholder="01XXXXXXXXX"></div></div></section>
-    <section class="cstep"><h2><span class="cstep__n">2</span>${tr('التوصيل', 'Delivery')}</h2><div class="fields">
-      <div class="field"><label for="gov">${tr('المحافظة', 'Governorate')}</label><select id="gov"><option value="">${tr('اختر…', 'Choose…')}</option>${D.govs.map(([c, a, e]) => `<option value="${c}">${L === 'ar' ? a : e}</option>`).join('')}</select></div>
-      <div class="field"><label for="city">${tr('المنطقة / المدينة', 'Area / city')}</label><input id="city"></div>
-      <div class="field"><label for="street">${tr('الشارع والعنوان', 'Street and address')}</label><input id="street"></div></div><p class="ship-quote muted js-quote"></p></section>
-    <section class="cstep"><h2><span class="cstep__n">3</span>${tr('طريقة الدفع', 'Payment method')}</h2><div class="paylist">
-      <label class="payopt"><input type="radio" name="pm" value="cod" checked><span><b>${tr('الدفع عند الاستلام', 'Cash on delivery')}</b><small>${tr('لو حابب طريقة دفع تانية، اتفق عليها مع فريق المبيعات على واتساب.', 'Prefer another method? Agree it with our sales team on WhatsApp.')}</small></span></label></div></section></div>
-    <aside class="summary summary--sticky"><h2>${tr('مراجعة الطلب', 'Order review')}</h2><ul class="mini-lines">${state.cart.map((l) => `<li><img src="${byId.get(l.id).image}" alt="" width="56" height="42"><span>${esc(byId.get(l.id).title)}</span><b>${money(lineTotal(l))}</b></li>`).join('')}</ul>
-    <dl><dt>${tr('المجموع الفرعي', 'Subtotal')}</dt><dd>${money(merch)}</dd><dt>${tr('الشحن', 'Shipping')}</dt><dd class="js-ship muted">${tr('يحدده فريق المبيعات', 'Confirmed by sales')}</dd><dt class="summary__total">${tr('الإجمالي', 'Total')}</dt><dd class="summary__total js-grand">${money(merch)}</dd></dl>
-    <button class="btn btn--primary btn--lg btn--block">${tr('إرسال الطلب على واتساب', 'Send order on WhatsApp')}</button></aside></form></div>`;
+    <section class="cstep"><h2>${tr('بياناتك', 'Your details')}</h2><div class="fields">
+      ${fld('name', tr('الاسم بالكامل', 'Full name'), `<input id="name" name="name" autocomplete="name" value="${v('name')}" aria-describedby="name-err">`)}
+      ${fld('phone', tr('رقم الموبايل', 'Mobile number'), `<input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="01XXXXXXXXX" maxlength="16" value="${v('phone')}" aria-describedby="phone-err">`, tr('المندوب هيكلمك عليه قبل ما يوصل', 'The courier calls this number before delivery'))}
+    </div></section>
+    <section class="cstep"><h2>${tr('عنوان التوصيل', 'Delivery address')}</h2><div class="fields">
+      ${fld('gov', tr('المحافظة', 'Governorate'), `<select id="gov" name="gov" autocomplete="address-level1" aria-describedby="gov-err"><option value="">${tr('اختر…', 'Choose…')}</option>${D.govs.map(([code, a, e]) => `<option value="${code}"${c.gov === code ? ' selected' : ''}>${L === 'ar' ? a : e}</option>`).join('')}</select>`)}
+      ${fld('city', tr('المنطقة / المدينة', 'Area / city'), `<input id="city" name="city" autocomplete="address-level2" placeholder="${tr('مثلاً: مدينة نصر', 'e.g. Nasr City')}" value="${v('city')}" aria-describedby="city-err">`)}
+      ${fld('street', tr('العنوان بالتفصيل', 'Full address'), `<input id="street" name="street" class="span2" autocomplete="street-address" placeholder="${tr('الشارع، رقم العمارة، الدور، الشقة', 'Street, building, floor, apartment')}" value="${v('street')}" aria-describedby="street-err">`)}
+      ${fld('landmark', `${tr('علامة مميزة', 'Landmark')} <span class="muted">(${tr('اختياري', 'optional')})</span>`, `<input id="landmark" name="landmark" class="span2" placeholder="${tr('مثلاً: جنب صيدلية…', 'e.g. next to … pharmacy')}" value="${v('landmark')}">`)}
+    </div><p class="ship-quote muted js-quote"></p></section>
+    <p class="note note--info"><span><b>${tr('الدفع كاش عند الاستلام', 'Cash on delivery')}</b> — ${tr('تعاين الجهاز قدام المندوب وبعدين تدفع. لو حابب طريقة دفع تانية قول لفريق المبيعات.', 'Inspect the laptop in front of the courier, then pay. Prefer another method? Tell our sales team.')}</span></p>
+  </div>
+    <aside class="summary summary--sticky"><h2>${tr('طلبك', 'Your order')}</h2><ul class="mini-lines">${state.cart.map((l) => `<li><img src="${byId.get(l.id).image}" alt="" width="56" height="42"><span>${esc(byId.get(l.id).title)}${l.qty > 1 ? ` × ${l.qty}` : ''}</span><b>${money(lineTotal(l))}</b></li>`).join('')}</ul>
+    <a class="muted" href="#/${L}/cart">${tr('تعديل السلة', 'Edit cart')}</a>
+    <dl><dt>${tr('المجموع الفرعي', 'Subtotal')}</dt><dd>${money(merch)}</dd><dt>${tr('الشحن', 'Shipping')}</dt><dd class="js-ship muted">${tr('اختار المحافظة', 'Choose governorate')}</dd><dt class="summary__total">${tr('الإجمالي', 'Total')}</dt><dd class="summary__total js-grand">${money(merch)}</dd></dl>
+    <button class="btn btn--primary btn--lg btn--block">${tr('تأكيد الطلب', 'Place order')}</button>
+    <p class="muted" style="font-size:.82rem;margin:8px 0 0;text-align:center">${tr('هيتفتح واتساب برسالة جاهزة فيها طلبك، ابعتها وبس. مش هتدفع أي حاجة دلوقتي.', 'WhatsApp opens with your order ready; just send it. Nothing to pay now.')}</p></aside></form></div>`;
+}
+// تحويل الأرقام العربية وشيل المسافات و +20 عشان العميل يكتب الرقم بأي شكل
+const normPhone = (s: string) => {
+  let p = s.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\s\-().]/g, '');
+  if (p.startsWith('+20')) p = '0' + p.slice(3); else if (p.startsWith('0020')) p = '0' + p.slice(4); else if (/^20(1[0125]\d{8})$/.test(p)) p = '0' + p.slice(2);
+  return p;
+};
+const coRules: Record<string, (v: string) => string> = {
+  name: (v) => (v.trim().length < 3 ? tr('اكتب اسمك عشان المندوب يعرف يسلّمك', 'Enter your name for the courier') : ''),
+  phone: (v) => (!/^01[0125]\d{8}$/.test(normPhone(v)) ? tr('الرقم لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015', 'Use an 11-digit Egyptian mobile starting 010, 011, 012 or 015') : ''),
+  gov: (v) => (!v ? tr('اختار المحافظة', 'Choose a governorate') : ''),
+  city: (v) => (v.trim().length < 2 ? tr('اكتب المنطقة أو المدينة', 'Enter your area or city') : ''),
+  street: (v) => (v.trim().length < 6 ? tr('اكتب الشارع ورقم العمارة على الأقل', 'Enter at least the street and building number') : ''),
+};
+function coErr(f: HTMLFormElement, k: string, msg: string) {
+  const box = $(`[data-f="${k}"]`, f); if (!box) return;
+  box.classList.toggle('field--err', !!msg); $(`#${k}-err`, box)!.textContent = msg;
+  $(`#${k}`, box)!.setAttribute('aria-invalid', msg ? 'true' : 'false');
 }
 function quote(gov: string, merch: number) {
   const z = D.zones.find((x) => x.gov.includes(gov));
@@ -231,7 +262,15 @@ function enhance(root: HTMLElement) {
   const co = $<HTMLFormElement>('.js-demo-checkout', root);
   if (co) {
     const merch = Number(co.dataset.merch);
-    $('#gov', co)!.addEventListener('change', (e) => { const q = quote((e.target as HTMLSelectElement).value, merch); $('.js-quote', co)!.textContent = q.text; $('.js-ship', co)!.textContent = (q as any).unknown ? tr('يحدده فريق المبيعات', 'Confirmed by sales') : q.ok ? (q.fee ? money(q.fee) : tr('مجاني', 'Free')) : '—'; $('.js-grand', co)!.textContent = money(merch + q.fee); });
+    const ship = () => { const g = ($('#gov', co) as HTMLSelectElement).value; if (!g) return; const q = quote(g, merch); $('.js-quote', co)!.textContent = q.text; $('.js-ship', co)!.textContent = (q as any).unknown ? tr('يحدده فريق المبيعات', 'Confirmed by sales') : q.fee ? money(q.fee) : tr('مجاني', 'Free'); $('.js-grand', co)!.textContent = money(merch + q.fee); };
+    $('#gov', co)!.addEventListener('change', () => { ship(); coErr(co, 'gov', ''); });
+    ship();
+    for (const k of Object.keys(coRules)) {
+      const el = $<HTMLInputElement>(`#${k}`, co)!;
+      el.addEventListener('blur', () => { if (el.value) coErr(co, k, coRules[k](el.value)); });
+      el.addEventListener('input', () => { if ($(`[data-f="${k}"]`, co)!.classList.contains('field--err')) coErr(co, k, coRules[k](el.value)); });
+    }
+    $<HTMLInputElement>('#phone', co)!.addEventListener('blur', (e) => { const t = e.target as HTMLInputElement; const n = normPhone(t.value); if (/^01[0125]\d{8}$/.test(n)) t.value = n; });
   }
 }
 
@@ -276,17 +315,25 @@ function onSubmit(e: Event) {
     return;
   }
   if (f.matches('.js-demo-checkout')) {
-    const phone = ($('#phone', f) as HTMLInputElement).value.replace(/\s/g, '');
-    const name = ($('#name', f) as HTMLInputElement).value.trim(); const gov = ($('#gov', f) as HTMLSelectElement).value;
-    if (name.length < 3 || !/^01[0125]\d{8}$/.test(phone) || !gov) return toast(tr('اكمل الاسم ورقم موبايل مصري صحيح والمحافظة', 'Enter a name, a valid Egyptian mobile and governorate'));
-    const govName = (D.govs.find((g) => g[0] === gov) || [])[L === 'ar' ? 1 : 2] || gov;
-    const pm = (($('input[name=pm]:checked', f) as HTMLInputElement | null)?.closest('label')?.textContent || '').trim();
+    const val = (k: string) => ($(`#${k}`, f) as HTMLInputElement).value;
+    let first = '';
+    for (const k of Object.keys(coRules)) { const m = coRules[k](val(k)); coErr(f, k, m); if (m && !first) first = k; }
+    if (first) { const el = $<HTMLInputElement>(`#${first}`, f)!; el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+    const c = { name: val('name').trim(), phone: normPhone(val('phone')), gov: val('gov'), city: val('city').trim(), street: val('street').trim(), landmark: val('landmark').trim() };
+    store.set('lo_customer', c);
+    const govName = (D.govs.find((g) => g[0] === c.gov) || [])[L === 'ar' ? 1 : 2] || c.gov;
+    const merch = Number(f.dataset.merch); const q = quote(c.gov, merch);
+    const ref = 'LO-' + Date.now().toString(36).toUpperCase().slice(-6);
     const lines = state.cart.map((l) => `• ${byId.get(l.id).title}${l.opts.length ? ` (${l.opts.map((o) => o.label).join('، ')})` : ''} × ${l.qty} — ${money(lineTotal(l))}`).join('\n');
-    const msg = tr(`طلب جديد من الموقع:\n${lines}\nالإجمالي (بدون الشحن): ${money(Number(f.dataset.merch))}\n\nالاسم: ${name}\nالموبايل: ${phone}\nالعنوان: ${govName} — ${($('#city', f) as HTMLInputElement).value} — ${($('#street', f) as HTMLInputElement).value}\nطريقة الدفع المفضلة: ${pm}`,
-      `New order from the website:\n${lines}\nTotal (excl. shipping): ${money(Number(f.dataset.merch))}\n\nName: ${name}\nMobile: ${phone}\nAddress: ${govName} — ${($('#city', f) as HTMLInputElement).value} — ${($('#street', f) as HTMLInputElement).value}\nPreferred payment: ${pm}`);
-    window.open(`https://wa.me/${D.wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    const shipTxt = (q as any).unknown ? tr('يحدده فريق المبيعات', 'to be confirmed') : q.fee ? money(q.fee) : tr('مجاني', 'Free');
+    const addr = [c.street, c.city, govName].join(L === 'ar' ? '، ' : ', ') + (c.landmark ? ` (${c.landmark})` : '');
+    const msg = tr(`طلب جديد من الموقع — رقم ${ref}\n${lines}\nالشحن: ${shipTxt}\nالإجمالي: ${money(merch + q.fee)}\n\nالاسم: ${c.name}\nالموبايل: ${c.phone}\nالعنوان: ${addr}\nالدفع: كاش عند الاستلام`,
+      `New website order — ref ${ref}\n${lines}\nShipping: ${shipTxt}\nTotal: ${money(merch + q.fee)}\n\nName: ${c.name}\nMobile: ${c.phone}\nAddress: ${addr}\nPayment: cash on delivery`);
+    const wa = `https://wa.me/${D.wa}?text=${encodeURIComponent(msg)}`;
+    const w = window.open(wa, '_blank', 'noopener');
     state.cart = []; counts();
-    $('#main')!.innerHTML = `<div class="container container--narrow"><div class="order-hero"><span class="order-hero__icon">✓</span><div><h1>${tr('تم تجهيز طلبك على واتساب', 'Your order is ready on WhatsApp')}</h1><p>${tr('ابعت الرسالة اللي اتفتحت في واتساب، وفريق المبيعات هيأكدلك التوفر وتكلفة الشحن. الطلب مش مؤكد غير بعد رد فريق المبيعات.', 'Send the message that opened in WhatsApp; our sales team will confirm availability and shipping. The order is confirmed only after they reply.')}</p><a class="btn btn--wa" href="https://wa.me/${D.wa}" target="_blank" rel="noopener">${tr('افتح واتساب', 'Open WhatsApp')}</a> </div></div><a class="btn btn--primary" href="#/${L}">${tr('الرئيسية', 'Home')}</a></div>`;
+    $('#main')!.innerHTML = `<div class="container container--narrow"><div class="order-hero"><span class="order-hero__icon">✓</span><div><h1>${tr('طلبك جاهز، فاضل تبعته', 'Your order is ready to send')}</h1><p>${tr(`رقم الطلب <b dir="ltr">${ref}</b>. اضغط «إرسال» في رسالة واتساب اللي اتفتحت، وفريق المبيعات هيكلمك على <b dir="ltr">${c.phone}</b> يأكد التوفر والشحن.`, `Order ref <b>${ref}</b>. Tap Send in the WhatsApp message that opened; our sales team will call <b>${c.phone}</b> to confirm.`)}</p><a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">${tr('واتساب ما اتفتحش؟ افتحه من هنا', "WhatsApp didn't open? Open it here")}</a></div></div><a class="btn btn--primary" href="#/${L}">${tr('الرئيسية', 'Home')}</a></div>`;
+    void w; window.scrollTo(0, 0);
     return;
   }
   if (f.matches('form[action*="/contact"], form[action*="/track"]')) { window.open(`https://wa.me/${D.wa}`, '_blank', 'noopener'); return; }
